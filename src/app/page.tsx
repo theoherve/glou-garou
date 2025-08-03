@@ -209,41 +209,22 @@ export default function HomePage() {
           </motion.div>
 
           {/* Footer avec icônes effrayantes */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
+          <div
             className="text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-2">
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              >
+            <div className="flex items-center justify-center gap-8 mb-2">
+              <div>
                 <Eye className="w-4 h-4 text-[#ff3333]" />
-              </motion.div>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Skull className="w-4 h-4 text-[#ff9933]" />
-              </motion.div>
-              <motion.div
-                animate={{ rotate: [0, -360] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              >
+              </div>
+              <div>
                 <Eye className="w-4 h-4 text-[#ff3333]" />
-              </motion.div>
+              </div>
             </div>
-            <motion.p 
-              className="text-[#cccccc] text-sm flex items-center justify-center gap-2"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
+            <p className="text-[#cccccc] text-sm flex items-center justify-center gap-2">
               Préparez-vous pour une nuit terrifiante...
               <Moon className="w-4 h-4 text-[#ff9933]" />
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
         </motion.div>
       </div>
     </div>
