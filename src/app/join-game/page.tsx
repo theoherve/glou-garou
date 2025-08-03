@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, UserPlus, Copy, Check, Moon } from 'lucide-react';
 import Link from 'next/link';
@@ -11,6 +11,22 @@ export default function JoinGamePage() {
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Récupérer les paramètres depuis l'URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const nameFromUrl = urlParams.get('name');
+      const codeFromUrl = urlParams.get('code');
+      
+      if (nameFromUrl) {
+        setPlayerName(decodeURIComponent(nameFromUrl));
+      }
+      if (codeFromUrl) {
+        setRoomCode(decodeURIComponent(codeFromUrl));
+      }
+    }
+  }, []);
 
   const handleJoinGame = async () => {
     if (!playerName.trim() || !roomCode.trim()) return;

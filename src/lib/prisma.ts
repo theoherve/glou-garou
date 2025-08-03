@@ -91,6 +91,7 @@ export const gameService = {
   async upsertGameSettings(
     gameId: string,
     settings: {
+      minPlayers: number;
       maxPlayers: number;
       enableLovers: boolean;
       enableVoyante: boolean;
@@ -100,6 +101,7 @@ export const gameService = {
       enableCapitaine: boolean;
       enableVoleur: boolean;
       roles: string[];
+      roleCounts: Record<string, number>;
     }
   ) {
     return await prisma.gameSettings.upsert({

@@ -57,6 +57,7 @@ model GameSettings {
   id        String @id @default(cuid())
   
   // Game configuration
+  minPlayers Int @default(6)
   maxPlayers Int @default(8)
   enableLovers Boolean @default(false)
   enableVoyante Boolean @default(false)
@@ -68,6 +69,7 @@ model GameSettings {
   
   // Role distribution
   roles     String[] // Array of role IDs
+  roleCounts Json? // Record<Role, number> - number of cards per role
   
   // Relations
   gameId    String @unique
