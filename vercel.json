@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "pnpm install",
+  "env": {
+    "POSTGRES_URL_NON_POOLING": "@postgres_url_non_pooling",
+    "NEXT_PUBLIC_SOCKET_URL": "@next_public_socket_url"
+  }
+} 

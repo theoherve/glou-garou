@@ -26,11 +26,20 @@ interface GamePageProps {
   }>;
 }
 
-function GamePageClient({ roomCode }: { roomCode: string }) {
+function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
+  const [roomCode, setRoomCode] = useState<string>('');
   const { currentGame, currentPlayer, isLoading, error } = useGameStore();
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showNightAnimation, setShowNightAnimation] = useState(false);
+
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setRoomCode(resolvedParams.roomCode);
+    };
+    resolveParams();
+  }, [params]);
 
   const handleCopyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
@@ -70,10 +79,6 @@ function GamePageClient({ roomCode }: { roomCode: string }) {
     }
   };
 
-  const alivePlayers = currentGame?.players.filter(p => p.status === 'alive') || [];
-  const deadPlayers = currentGame?.players.filter(p => p.status !== 'alive') || [];
-  const isGameMaster = currentPlayer?.isGameMaster || false;
-
   // Show night animation when phase changes to night
   useEffect(() => {
     if (currentGame?.phase === 'night') {
@@ -81,6 +86,22 @@ function GamePageClient({ roomCode }: { roomCode: string }) {
       setTimeout(() => setShowNightAnimation(false), 5000);
     }
   }, [currentGame?.phase]);
+
+  const alivePlayers = currentGame?.players.filter(p => p.status === 'alive') || [];
+  const deadPlayers = currentGame?.players.filter(p => p.status !== 'alive') || [];
+  const isGameMaster = currentPlayer?.isGameMaster || false;
+
+  // Show loading while roomCode is being resolved
+  if (!roomCode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Chargement de la salle...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -348,7 +369,6 @@ function GamePageClient({ roomCode }: { roomCode: string }) {
   );
 }
 
-export default async function GamePage({ params }: GamePageProps) {
-  const resolvedParams = await params;
-  return <GamePageClient roomCode={resolvedParams.roomCode} />;
+export default function GamePage({ params }: GamePageProps) {
+  return <GamePageClient params={params} />;
 } 
