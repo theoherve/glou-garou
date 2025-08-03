@@ -159,7 +159,7 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
       <div className="relative z-10 bg-[#2a2a2a]/80 backdrop-blur-sm border-b border-[#ff3333]/20 p-4">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-[#ff9933]">Glou Garou</h1>
+            <h1 className="text-2xl font-bold text-[#ff9933] font-creepster">Glou Garou</h1>
             <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1 rounded-lg border border-[#333333]">
               <span className="text-[#cccccc] text-sm">Salle:</span>
               <span className="text-[#e0e0e0] font-mono font-semibold">{roomCode}</span>

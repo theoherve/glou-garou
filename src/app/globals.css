@@ -20,15 +20,49 @@
   --color-accent-blue: var(--accent-blue);
   --color-card-bg: var(--card-bg);
   --color-border-red: var(--border-red);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-creepster: var(--font-creepster);
+  --font-crimson-pro: var(--font-crimson-pro);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-crimson-pro), serif;
   line-height: 1.6;
+}
+
+/* Classes utilitaires pour les polices */
+.font-creepster {
+  font-family: var(--font-creepster), cursive;
+  text-shadow: 2px 2px 4px rgba(255, 51, 51, 0.3);
+  letter-spacing: 1px;
+}
+
+.font-crimson-pro {
+  font-family: var(--font-crimson-pro), serif;
+}
+
+/* Effet de texte effrayant */
+.text-shadow-red {
+  text-shadow: 2px 2px 4px rgba(255, 51, 51, 0.5);
+}
+
+.text-shadow-orange {
+  text-shadow: 2px 2px 4px rgba(255, 153, 51, 0.5);
+}
+
+/* Animation de pulsation pour les titres */
+@keyframes title-pulse {
+  0%, 100% {
+    text-shadow: 2px 2px 4px rgba(255, 51, 51, 0.3);
+  }
+  50% {
+    text-shadow: 2px 2px 8px rgba(255, 51, 51, 0.6);
+  }
+}
+
+.title-pulse {
+  animation: title-pulse 3s ease-in-out infinite;
 }
 
 /* Custom scrollbar */

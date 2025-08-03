@@ -59,6 +59,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       // Create game settings
       await gameService.upsertGameSettings(dbGame.id, {
+        minPlayers: settings.minPlayers,
         maxPlayers: settings.maxPlayers,
         enableLovers: settings.enableLovers,
         enableVoyante: settings.enableVoyante,
@@ -68,6 +69,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         enableCapitaine: settings.enableCapitaine,
         enableVoleur: settings.enableVoleur,
         roles: settings.roles,
+        roleCounts: settings.roleCounts,
       });
 
       // Convert to local Game type

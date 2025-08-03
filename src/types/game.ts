@@ -46,7 +46,9 @@ export interface Game {
 
 export interface GameSettings {
   roles: Role[];
+  minPlayers: number;
   maxPlayers: number;
+  roleCounts: Record<Role, number>;
   enableLovers: boolean;
   enableVoyante: boolean;
   enableChasseur: boolean;

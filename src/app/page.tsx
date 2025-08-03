@@ -7,6 +7,9 @@ import Link from 'next/link';
 
 export default function HomePage() {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [gameMasterName, setGameMasterName] = useState('');
+  const [playerName, setPlayerName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
 
   useEffect(() => {
     setWindowSize({
@@ -66,7 +69,7 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-center gap-3 mb-2">
               <Moon className="w-8 h-8 text-[#ff9933]" />
-              <h1 className="text-4xl font-bold text-[#ff9933]">Glou Garou</h1>
+              <h1 className="text-4xl font-bold text-[#ff9933] font-creepster title-pulse">Glou Garou</h1>
             </div>
             <p className="text-[#cccccc] text-lg">
               Le jeu de loup-garou en ligne le plus effrayant
@@ -93,16 +96,19 @@ export default function HomePage() {
                 <label className="block text-[#e0e0e0] text-sm mb-2">Votre nom</label>
                 <input
                   type="text"
+                  value={gameMasterName}
+                  onChange={(e) => setGameMasterName(e.target.value)}
                   placeholder="Entrez votre nom..."
                   className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
                 />
               </div>
               
-              <Link href="/create-game">
+              <Link href={`/create-game?name=${encodeURIComponent(gameMasterName)}`}>
                 <motion.button
-                  className="w-full bg-[#ff3333] hover:bg-[#e62e2e] text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={!gameMasterName.trim()}
+                  className="w-full bg-[#ff3333] hover:bg-[#e62e2e] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  whileHover={{ scale: gameMasterName.trim() ? 1.02 : 1 }}
+                  whileTap={{ scale: gameMasterName.trim() ? 0.98 : 1 }}
                 >
                   <Zap className="w-4 h-4" />
                   Créer une nouvelle partie
@@ -131,6 +137,8 @@ export default function HomePage() {
                 <label className="block text-[#e0e0e0] text-sm mb-2">Votre nom</label>
                 <input
                   type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="Entrez votre nom..."
                   className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
                 />
@@ -140,16 +148,19 @@ export default function HomePage() {
                 <label className="block text-[#e0e0e0] text-sm mb-2">Code de la partie</label>
                 <input
                   type="text"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   placeholder="Ex: WOLF123"
                   className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
                 />
               </div>
               
-              <Link href="/join-game">
+              <Link href={`/join-game?name=${encodeURIComponent(playerName)}&code=${encodeURIComponent(roomCode)}`}>
                 <motion.button
-                  className="w-full bg-[#333a45] hover:bg-[#2a3038] text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={!playerName.trim() || !roomCode.trim()}
+                  className="w-full bg-[#333a45] hover:bg-[#2a3038] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  whileHover={{ scale: (playerName.trim() && roomCode.trim()) ? 1.02 : 1 }}
+                  whileTap={{ scale: (playerName.trim() && roomCode.trim()) ? 0.98 : 1 }}
                 >
                   <Users className="w-4 h-4" />
                   Rejoindre la partie

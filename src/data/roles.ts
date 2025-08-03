@@ -155,3 +155,75 @@ export const getDefaultRoles = (playerCount: number): Role[] => {
     "sorciere",
   ];
 };
+
+export const getDefaultRoleCounts = (
+  playerCount: number
+): Record<Role, number> => {
+  const counts: Record<Role, number> = {
+    "loup-garou": 0,
+    villageois: 0,
+    voyante: 0,
+    chasseur: 0,
+    cupidon: 0,
+    sorciere: 0,
+    "petite-fille": 0,
+    capitaine: 0,
+    voleur: 0,
+  };
+
+  if (playerCount < 8) {
+    counts["loup-garou"] = 1;
+    counts["villageois"] = playerCount - 1;
+  } else if (playerCount < 10) {
+    counts["loup-garou"] = 2;
+    counts["villageois"] = playerCount - 3;
+    counts["voyante"] = 1;
+  } else if (playerCount < 12) {
+    counts["loup-garou"] = 2;
+    counts["villageois"] = playerCount - 4;
+    counts["voyante"] = 1;
+    counts["sorciere"] = 1;
+  } else if (playerCount < 15) {
+    counts["loup-garou"] = 3;
+    counts["villageois"] = playerCount - 6;
+    counts["voyante"] = 1;
+    counts["sorciere"] = 1;
+    counts["cupidon"] = 1;
+  } else {
+    counts["loup-garou"] = 4;
+    counts["villageois"] = playerCount - 8;
+    counts["voyante"] = 1;
+    counts["sorciere"] = 1;
+    counts["cupidon"] = 1;
+    counts["voleur"] = 1;
+  }
+
+  return counts;
+};
+
+export const getTotalRoleCount = (roleCounts: Record<Role, number>): number => {
+  return Object.values(roleCounts).reduce((sum, count) => sum + count, 0);
+};
+
+export const validateRoleCounts = (
+  roleCounts: Record<Role, number>,
+  playerCount: number
+): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  const total = getTotalRoleCount(roleCounts);
+
+  if (total !== playerCount) {
+    errors.push(
+      `Le nombre total de rôles (${total}) doit être égal au nombre de joueurs (${playerCount})`
+    );
+  }
+
+  if (roleCounts["loup-garou"] < 1) {
+    errors.push("Il doit y avoir au moins 1 loup-garou");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+};
