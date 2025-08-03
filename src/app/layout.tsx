@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Creepster, Crimson_Pro } from "next/font/google";
 import "./globals.css";
 import { SocketStatus } from "@/components/SocketStatus";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const creepster = Creepster({
+  variable: "--font-creepster",
   subsets: ["latin"],
+  weight: "400",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const crimsonPro = Crimson_Pro({
+  variable: "--font-crimson-pro",
   subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -26,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${creepster.variable} ${crimsonPro.variable} antialiased`}
       >
         {children}
         <SocketStatus />

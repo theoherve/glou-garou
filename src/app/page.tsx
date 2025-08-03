@@ -69,7 +69,7 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-center gap-3 mb-2">
               <Moon className="w-8 h-8 text-[#ff9933]" />
-              <h1 className="text-4xl font-bold text-[#ff9933]">Glou Garou</h1>
+              <h1 className="text-4xl font-bold text-[#ff9933] font-creepster title-pulse">Glou Garou</h1>
             </div>
             <p className="text-[#cccccc] text-lg">
               Le jeu de loup-garou en ligne le plus effrayant

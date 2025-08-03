@@ -135,7 +135,7 @@ export default function CreateGamePage() {
           </Link>
           <div className="flex items-center gap-3">
             <Crown className="w-8 h-8 text-[#ff9933]" />
-            <h1 className="text-3xl font-bold text-[#e0e0e0]">Créer une partie</h1>
+            <h1 className="text-3xl font-bold text-[#e0e0e0] font-creepster">Créer une partie</h1>
           </div>
         </motion.div>
 

@@ -35,7 +35,7 @@ export default function RulesPage() {
           </Link>
           <div className="flex items-center gap-3">
             <Moon className="w-8 h-8 text-[#ff9933]" />
-            <h1 className="text-3xl font-bold text-[#e0e0e0]">Règles du jeu</h1>
+            <h1 className="text-3xl font-bold text-[#e0e0e0] font-creepster">Règles du jeu</h1>
           </div>
         </motion.div>
 
