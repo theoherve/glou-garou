@@ -27,7 +27,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-[#1a1a1a]/90 backdrop-blur-sm"
         onAnimationComplete={onComplete}
       >
         {/* Moon */}
@@ -37,7 +37,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
           transition={{ duration: 2, ease: "easeOut" }}
           className="absolute top-20 left-1/2 transform -translate-x-1/2"
         >
-          <Moon className="w-32 h-32 text-yellow-200" />
+          <Moon className="w-32 h-32 text-[#ff9933]" />
         </motion.div>
 
         {/* Stars */}
@@ -61,7 +61,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
               top: `${Math.random() * 60}%`,
             }}
           >
-            <Star className="w-2 h-2 text-white" fill="white" />
+            <Star className="w-2 h-2 text-[#ff9933]" fill="#ff9933" />
           </motion.div>
         ))}
 
@@ -85,7 +85,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
               top: `${20 + Math.random() * 30}%`,
             }}
           >
-            <Cloud className="w-24 h-12 text-gray-600" />
+            <Cloud className="w-24 h-12 text-[#333333]" />
           </motion.div>
         ))}
 
@@ -104,7 +104,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
           }}
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
         >
-          <div className="w-4 h-4 bg-red-500 rounded-full" />
+          <div className="w-4 h-4 bg-[#ff3333] rounded-full" />
         </motion.div>
 
         {/* Text */}
@@ -114,10 +114,10 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
           transition={{ delay: 1, duration: 1 }}
           className="absolute bottom-1/3 left-1/2 transform -translate-x-1/2 text-center"
         >
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold text-[#e0e0e0] mb-4">
             La nuit tombe sur Thiercelieux...
           </h2>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-[#cccccc]">
             Les loups-garous se réveillent
           </p>
         </motion.div>
@@ -141,7 +141,7 @@ export default function NightAnimation({ isActive, onComplete }: NightAnimationP
               delay: Math.random() * 2,
               ease: "linear"
             }}
-            className="absolute w-1 h-1 bg-white/30 rounded-full"
+            className="absolute w-1 h-1 bg-[#ff9933]/30 rounded-full"
           />
         ))}
       </motion.div>

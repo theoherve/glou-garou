@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Users, Play, Settings, Eye } from 'lucide-react';
+import { Moon, Crown, Users, Zap, Copy } from 'lucide-react';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -16,114 +16,15 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-[#1a1a1a] relative overflow-hidden">
+      {/* Animated background elements - keeping the floating bubbles */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-red-500/10 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-blue-500/5 rounded-full blur-2xl animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-20 w-32 h-32 bg-red-500/10 rounded-full blur-xl pulse-glow"></div>
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-orange-500/10 rounded-full blur-xl pulse-glow" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-orange-500/5 rounded-full blur-2xl pulse-glow" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center"
-        >
-          {/* Title */}
-          <motion.h1 
-            className="text-6xl md:text-8xl font-bold text-white mb-4"
-          >
-            <span className="text-red-500">Glou</span>
-            <span className="text-gray-300"> Garou</span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p 
-            className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            Le jeu de loup-garou en ligne. Survivez à la nuit ou éliminez les villageois.
-          </motion.p>
-
-          {/* Action buttons */}
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <Link href="/create-game">
-              <motion.button
-                className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/25"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Play className="w-6 h-6" />
-                Créer une partie
-              </motion.button>
-            </Link>
-
-            <Link href="/join-game">
-              <motion.button
-                className="flex items-center gap-3 bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-purple-500/25"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Users className="w-6 h-6" />
-                Rejoindre une partie
-              </motion.button>
-            </Link>
-          </motion.div>
-
-          {/* Features */}
-          <motion.div 
-            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9, duration: 0.8 }}
-          >
-            <div className="text-center p-6 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
-              <Moon className="w-12 h-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Nuit Mystérieuse</h3>
-              <p className="text-gray-300">Plongez dans l&apos;atmosphère sombre et mystérieuse du village de Thiercelieux</p>
-            </div>
-
-            <div className="text-center p-6 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
-              <Users className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Jouez en Ligne</h3>
-              <p className="text-gray-300">Rejoignez vos amis en temps réel pour des parties épiques</p>
-            </div>
-
-            <div className="text-center p-6 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
-              <Eye className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Rôles Variés</h3>
-              <p className="text-gray-300">Découvrez tous les rôles du jeu original avec leurs pouvoirs uniques</p>
-            </div>
-          </motion.div>
-
-          {/* Rules link */}
-          <motion.div 
-            className="mt-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-          >
-            <Link href="/rules">
-              <button className="text-gray-400 hover:text-white transition-colors duration-300 flex items-center gap-2 mx-auto">
-                <Settings className="w-5 h-5" />
-                Voir les règles du jeu
-              </button>
-            </Link>
-          </motion.div>
-        </motion.div>
-      </div>
-
-      {/* Floating particles effect */}
+      {/* Floating particles effect - keeping the existing animation */}
       {windowSize.width > 0 && (
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(20)].map((_, i) => (
@@ -147,6 +48,130 @@ export default function HomePage() {
           ))}
         </div>
       )}
+
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="w-full max-w-md mx-auto"
+        >
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-center mb-8"
+          >
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Moon className="w-8 h-8 text-[#ff9933]" />
+              <h1 className="text-4xl font-bold text-[#ff9933]">Glou Garou</h1>
+            </div>
+            <p className="text-[#cccccc] text-lg">
+              Le jeu de loup-garou en ligne le plus effrayant
+            </p>
+          </motion.div>
+
+          {/* Create Game Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="bg-[#2a2a2a] rounded-lg p-6 mb-6 border border-[#ff3333]/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Crown className="w-5 h-5 text-[#ff9933]" />
+              <h2 className="text-[#e0e0e0] font-semibold text-lg">Créer une partie</h2>
+            </div>
+            <p className="text-[#cccccc] text-sm mb-4">
+              Devenir maître du jeu et configurer la partie
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[#e0e0e0] text-sm mb-2">Votre nom</label>
+                <input
+                  type="text"
+                  placeholder="Entrez votre nom..."
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
+                />
+              </div>
+              
+              <Link href="/create-game">
+                <motion.button
+                  className="w-full bg-[#ff3333] hover:bg-[#e62e2e] text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Zap className="w-4 h-4" />
+                  Créer une nouvelle partie
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Join Game Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="bg-[#2a2a2a] rounded-lg p-6 mb-6 border border-[#ff3333]/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-5 h-5 text-[#ff9933]" />
+              <h2 className="text-[#e0e0e0] font-semibold text-lg">Rejoindre une partie</h2>
+            </div>
+            <p className="text-[#cccccc] text-sm mb-4">
+              Entrer le code de la partie pour rejoindre vos amis
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[#e0e0e0] text-sm mb-2">Votre nom</label>
+                <input
+                  type="text"
+                  placeholder="Entrez votre nom..."
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-[#e0e0e0] text-sm mb-2">Code de la partie</label>
+                <input
+                  type="text"
+                  placeholder="Ex: WOLF123"
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
+                />
+              </div>
+              
+              <Link href="/join-game">
+                <motion.button
+                  className="w-full bg-[#333a45] hover:bg-[#2a3038] text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Users className="w-4 h-4" />
+                  Rejoindre la partie
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Footer */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+            className="text-center"
+          >
+            <p className="text-[#cccccc] text-sm flex items-center justify-center gap-2">
+              Préparez-vous pour une nuit terrifiante...
+              <Moon className="w-4 h-4 text-[#ff9933]" />
+            </p>
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

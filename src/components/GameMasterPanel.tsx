@@ -64,7 +64,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
         return (
           <motion.button
             onClick={handleStartGame}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-[#ff3333] hover:bg-[#e62e2e] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -77,7 +77,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
         return (
           <motion.button
             onClick={handleNextPhase}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-[#333a45] hover:bg-[#2a3038] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -90,7 +90,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
         return (
           <motion.button
             onClick={handleNextPhase}
-            className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-[#ff9933] hover:bg-[#e68a2e] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -103,7 +103,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
         return (
           <motion.button
             onClick={handleNextPhase}
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-[#ff3333] hover:bg-[#e62e2e] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -116,7 +116,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
         return (
           <motion.button
             onClick={handleNextPhase}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full bg-[#333a45] hover:bg-[#2a3038] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -133,26 +133,26 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
   return (
     <div className="space-y-6">
       {/* Game Master Header */}
-      <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-500/30">
+      <div className="bg-[#ff9933]/20 rounded-lg p-4 border border-[#ff9933]/30">
         <div className="flex items-center gap-3 mb-3">
-          <Crown className="w-6 h-6 text-yellow-400" />
-          <h3 className="text-lg font-semibold text-white">Maître du jeu</h3>
+          <Crown className="w-6 h-6 text-[#ff9933]" />
+          <h3 className="text-lg font-semibold text-[#e0e0e0]">Maître du jeu</h3>
         </div>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-[#cccccc]">
           Vous contrôlez le déroulement de la partie. Utilisez les actions ci-dessous pour gérer le jeu.
         </p>
       </div>
 
       {/* Phase Actions */}
-      <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm border border-white/10">
-        <h4 className="text-white font-semibold mb-3">Actions de phase</h4>
+      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#ff3333]/20">
+        <h4 className="text-[#e0e0e0] font-semibold mb-3">Actions de phase</h4>
         {getPhaseActions()}
       </div>
 
       {/* Player Management */}
-      <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm border border-white/10">
-        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-          <Users className="w-5 h-5" />
+      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#ff3333]/20">
+        <h4 className="text-[#e0e0e0] font-semibold mb-3 flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#ff9933]" />
           Gestion des joueurs
         </h4>
         
@@ -162,19 +162,19 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
               key={player.id}
               className={`p-3 rounded-lg border transition-all duration-200 ${
                 player.status === 'alive'
-                  ? 'bg-white/10 border-white/20'
-                  : 'bg-red-500/20 border-red-500/40 opacity-60'
+                  ? 'bg-[#1a1a1a] border-[#333333]'
+                  : 'bg-[#ff3333]/20 border-[#ff3333]/40 opacity-60'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-white">{player.name}</span>
-                  {player.isGameMaster && <Crown className="w-4 h-4 text-yellow-400" />}
+                  <span className="font-semibold text-[#e0e0e0]">{player.name}</span>
+                  {player.isGameMaster && <Crown className="w-4 h-4 text-[#ff9933]" />}
                   {player.isLover && <Heart className="w-4 h-4 text-pink-400" />}
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-300">
+                  <span className="text-sm text-[#cccccc]">
                     {getRoleData(player.role).name}
                   </span>
                   
@@ -182,18 +182,18 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
                     <>
                       <button
                         onClick={() => handleRevealRole(player.id)}
-                        className="p-1 bg-blue-600/20 hover:bg-blue-600/30 rounded transition-colors"
+                        className="p-1 bg-[#333a45]/20 hover:bg-[#333a45]/30 rounded transition-colors"
                         title="Révéler le rôle"
                       >
-                        <Eye className="w-4 h-4 text-blue-400" />
+                        <Eye className="w-4 h-4 text-[#ff9933]" />
                       </button>
                       
                       <button
                         onClick={() => handleEliminatePlayer(player.id)}
-                        className="p-1 bg-red-600/20 hover:bg-red-600/30 rounded transition-colors"
+                        className="p-1 bg-[#ff3333]/20 hover:bg-[#ff3333]/30 rounded transition-colors"
                         title="Éliminer le joueur"
                       >
-                        <UserX className="w-4 h-4 text-red-400" />
+                        <UserX className="w-4 h-4 text-[#ff3333]" />
                       </button>
                     </>
                   )}
@@ -201,7 +201,7 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
               </div>
               
               {player.status !== 'alive' && (
-                <div className="text-sm text-red-400 mt-1">
+                <div className="text-sm text-[#ff3333] mt-1">
                   Éliminé
                 </div>
               )}
@@ -211,24 +211,24 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
       </div>
 
       {/* Game Statistics */}
-      <div className="bg-white/5 rounded-lg p-4 backdrop-blur-sm border border-white/10">
-        <h4 className="text-white font-semibold mb-3">Statistiques</h4>
+      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#ff3333]/20">
+        <h4 className="text-[#e0e0e0] font-semibold mb-3">Statistiques</h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-300">Joueurs vivants:</span>
-            <span className="text-white font-semibold">{alivePlayers.length}</span>
+            <span className="text-[#cccccc]">Joueurs vivants:</span>
+            <span className="text-[#e0e0e0] font-semibold">{alivePlayers.length}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Joueurs éliminés:</span>
-            <span className="text-red-400 font-semibold">{deadPlayers.length}</span>
+            <span className="text-[#cccccc]">Joueurs éliminés:</span>
+            <span className="text-[#ff3333] font-semibold">{deadPlayers.length}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Nuit actuelle:</span>
-            <span className="text-white font-semibold">{game.currentNight}</span>
+            <span className="text-[#cccccc]">Nuit actuelle:</span>
+            <span className="text-[#e0e0e0] font-semibold">{game.currentNight}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Phase:</span>
-            <span className="text-white font-semibold">{game.phase}</span>
+            <span className="text-[#cccccc]">Phase:</span>
+            <span className="text-[#e0e0e0] font-semibold">{game.phase}</span>
           </div>
         </div>
       </div>
@@ -239,22 +239,22 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+            className="bg-[#2a2a2a] rounded-lg p-6 max-w-md w-full mx-4 border border-[#ff3333]/20"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Révéler le rôle</h3>
-            <p className="text-gray-300 mb-4">
+            <h3 className="text-xl font-semibold text-[#e0e0e0] mb-4">Révéler le rôle</h3>
+            <p className="text-[#cccccc] mb-4">
               Voulez-vous révéler le rôle de {game.players.find((p: Player) => p.id === selectedPlayer)?.name} ?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#333333] hover:bg-[#444444] text-[#e0e0e0] rounded-lg transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#333a45] hover:bg-[#2a3038] text-white rounded-lg transition-colors"
               >
                 Révéler
               </button>
@@ -269,22 +269,22 @@ export default function GameMasterPanel({ game, currentPlayer }: GameMasterPanel
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
+            className="bg-[#2a2a2a] rounded-lg p-6 max-w-md w-full mx-4 border border-[#ff3333]/20"
           >
-            <h3 className="text-xl font-semibold text-white mb-4">Éliminer le joueur</h3>
-            <p className="text-gray-300 mb-4">
+            <h3 className="text-xl font-semibold text-[#e0e0e0] mb-4">Éliminer le joueur</h3>
+            <p className="text-[#cccccc] mb-4">
               Êtes-vous sûr de vouloir éliminer {game.players.find((p: Player) => p.id === selectedPlayer)?.name} ?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowEliminateModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#333333] hover:bg-[#444444] text-[#e0e0e0] rounded-lg transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={confirmEliminate}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                className="flex-1 px-4 py-2 bg-[#ff3333] hover:bg-[#e62e2e] text-white rounded-lg transition-colors"
               >
                 Éliminer
               </button>
