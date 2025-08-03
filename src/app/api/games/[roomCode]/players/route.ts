@@ -3,11 +3,17 @@ import { gameService } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ gameId: string }> }
+  { params }: { params: Promise<{ roomCode: string }> }
 ) {
-  const { gameId } = await params;
+  const { roomCode } = await params;
   try {
-    const players = await gameService.getGamePlayers(gameId);
+    // Get game by room code first
+    const game = await gameService.getGameByRoomCode(roomCode);
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const players = await gameService.getGamePlayers(game.id);
     return NextResponse.json(players);
   } catch (error) {
     console.error("Error fetching players:", error);
@@ -20,9 +26,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ gameId: string }> }
+  { params }: { params: Promise<{ roomCode: string }> }
 ) {
-  const { gameId } = await params;
+  const { roomCode } = await params;
   try {
     const playerData = await request.json();
 
@@ -33,7 +39,13 @@ export async function POST(
       );
     }
 
-    const player = await gameService.addPlayer(gameId, {
+    // Get game by room code first
+    const game = await gameService.getGameByRoomCode(roomCode);
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
+    const player = await gameService.addPlayer(game.id, {
       name: playerData.name,
       role: playerData.role,
       status: "alive",
