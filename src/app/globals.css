@@ -65,6 +65,177 @@ body {
   animation: title-pulse 3s ease-in-out infinite;
 }
 
+/* Nouvelles animations effrayantes */
+
+/* Tremblement de texte */
+@keyframes text-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-1px); }
+  20% { transform: translateX(1px); }
+  30% { transform: translateX(-1px); }
+  40% { transform: translateX(1px); }
+  50% { transform: translateX(-1px); }
+  60% { transform: translateX(1px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+  90% { transform: translateX(-1px); }
+}
+
+.text-shake {
+  animation: text-shake 0.5s ease-in-out;
+}
+
+/* Effet de distorsion */
+@keyframes distort {
+  0%, 100% { 
+    transform: skewX(0deg) scale(1);
+    filter: hue-rotate(0deg);
+  }
+  25% { 
+    transform: skewX(1deg) scale(1.02);
+    filter: hue-rotate(5deg);
+  }
+  50% { 
+    transform: skewX(-1deg) scale(0.98);
+    filter: hue-rotate(-5deg);
+  }
+  75% { 
+    transform: skewX(1deg) scale(1.01);
+    filter: hue-rotate(3deg);
+  }
+}
+
+.distort {
+  animation: distort 3s ease-in-out infinite;
+}
+
+/* Flash rouge intermittent */
+@keyframes red-flash {
+  0%, 90%, 100% { 
+    background-color: rgba(255, 51, 51, 0);
+    box-shadow: 0 0 0 rgba(255, 51, 51, 0);
+  }
+  5% { 
+    background-color: rgba(255, 51, 51, 0.1);
+    box-shadow: 0 0 50px rgba(255, 51, 51, 0.3);
+  }
+}
+
+.red-flash {
+  animation: red-flash 8s ease-in-out infinite;
+}
+
+/* Effet de respiration */
+@keyframes breathe {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+.breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Particules de sang en background */
+@keyframes blood-drop-bg {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.blood-drop-bg {
+  animation: blood-drop-bg 8s linear infinite;
+}
+
+/* Particules de sang */
+@keyframes blood-drop {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.blood-drop {
+  animation: blood-drop 4s linear infinite;
+}
+
+/* Effet de glitch */
+@keyframes glitch {
+  0%, 100% { 
+    transform: translate(0);
+    text-shadow: none;
+  }
+  20% { 
+    transform: translate(-2px, 2px);
+    text-shadow: 2px 0 #ff0000, -2px 0 #00ff00;
+  }
+  40% { 
+    transform: translate(-2px, -2px);
+    text-shadow: 2px 0 #ff0000, -2px 0 #00ff00;
+  }
+  60% { 
+    transform: translate(2px, 2px);
+    text-shadow: -2px 0 #ff0000, 2px 0 #00ff00;
+  }
+  80% { 
+    transform: translate(2px, -2px);
+    text-shadow: -2px 0 #ff0000, 2px 0 #00ff00;
+  }
+}
+
+.glitch {
+  animation: glitch 0.3s ease-in-out infinite;
+}
+
+/* Effet de pulsation cardiaque */
+@keyframes heartbeat {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  14% { 
+    transform: scale(1.1);
+  }
+  28% { 
+    transform: scale(1);
+  }
+  42% { 
+    transform: scale(1.1);
+  }
+  70% { 
+    transform: scale(1);
+  }
+}
+
+.heartbeat {
+  animation: heartbeat 2s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -81,33 +252,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #e62e2e;
-}
-
-/* Floating bubbles animation */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-  }
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-}
-
-.floating-bubble {
-  animation: float 6s ease-in-out infinite;
-}
-
-.pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
 }
