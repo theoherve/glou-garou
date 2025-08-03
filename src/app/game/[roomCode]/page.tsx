@@ -21,19 +21,19 @@ import GameMasterPanel from '@/components/GameMasterPanel';
 import NightAnimation from '@/components/NightAnimation';
 
 interface GamePageProps {
-  params: {
+  params: Promise<{
     roomCode: string;
-  };
+  }>;
 }
 
-export default function GamePage({ params }: GamePageProps) {
+function GamePageClient({ roomCode }: { roomCode: string }) {
   const { currentGame, currentPlayer, isLoading, error } = useGameStore();
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showNightAnimation, setShowNightAnimation] = useState(false);
 
   const handleCopyRoomCode = () => {
-    navigator.clipboard.writeText(params.roomCode);
+    navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -134,7 +134,7 @@ export default function GamePage({ params }: GamePageProps) {
             <h1 className="text-2xl font-bold text-white">Glou Garou</h1>
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-lg">
               <span className="text-gray-300 text-sm">Salle:</span>
-              <span className="text-white font-mono font-semibold">{params.roomCode}</span>
+              <span className="text-white font-mono font-semibold">{roomCode}</span>
               <button
                 onClick={handleCopyRoomCode}
                 className="ml-2 text-gray-400 hover:text-white transition-colors"
@@ -346,4 +346,9 @@ export default function GamePage({ params }: GamePageProps) {
       />
     </div>
   );
+}
+
+export default async function GamePage({ params }: GamePageProps) {
+  const resolvedParams = await params;
+  return <GamePageClient roomCode={resolvedParams.roomCode} />;
 } 
