@@ -1,10 +1,25 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient as PrismaClientType } from "@prisma/client";
 
-declare global {
-  var prisma: PrismaClient | undefined;
+let PrismaClient: typeof PrismaClientType;
+
+try {
+  const { PrismaClient: PrismaClientClass } = require("@prisma/client");
+  PrismaClient = PrismaClientClass;
+} catch (error) {
+  console.error("Failed to import PrismaClient:", error);
+  // Fallback for environments where Prisma is not available
+  PrismaClient = class MockPrismaClient {
+    constructor() {
+      throw new Error("PrismaClient is not available in this environment");
+    }
+  } as typeof PrismaClientType;
 }
 
-export const prisma =
+declare global {
+  var prisma: PrismaClientType | undefined;
+}
+
+export const prisma: PrismaClientType =
   globalThis.prisma ??
   new PrismaClient({
     log:
