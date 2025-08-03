@@ -1,40 +1,45 @@
-import type { PrismaClient as PrismaClientType } from "@prisma/client";
-
-let PrismaClient: typeof PrismaClientType;
-
-try {
-  const { PrismaClient: PrismaClientClass } = require("@prisma/client");
-  PrismaClient = PrismaClientClass;
-} catch (error) {
-  console.error("Failed to import PrismaClient:", error);
-  // Fallback for environments where Prisma is not available
-  PrismaClient = class MockPrismaClient {
-    constructor() {
-      throw new Error("PrismaClient is not available in this environment");
+// Server-side only Prisma client
+const createPrismaClient = () => {
+  try {
+    // Only import Prisma on the server side
+    if (typeof window === 'undefined') {
+      const { PrismaClient } = require("@prisma/client");
+      return new PrismaClient({
+        log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+      });
     }
-  } as typeof PrismaClientType;
-}
+  } catch (error) {
+    console.error("Failed to create PrismaClient:", error);
+  }
+  
+  // Return null for client-side or if Prisma is not available
+  return null;
+};
 
 declare global {
-  var prisma: PrismaClientType | undefined;
+  var prisma: any;
 }
 
-export const prisma: PrismaClientType =
-  globalThis.prisma ??
-  new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
-  });
+export const prisma = globalThis.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") globalThis.prisma = prisma;
+if (process.env.NODE_ENV !== "production" && prisma) {
+  globalThis.prisma = prisma;
+}
+
+// Helper function to ensure Prisma is available
+const ensurePrisma = () => {
+  if (!prisma) {
+    throw new Error("Prisma client not available");
+  }
+  return prisma;
+};
 
 // Game service functions using Prisma
 export const gameService = {
   // Create a new game
   async createGame(roomCode: string, gameMasterId: string) {
-    return await prisma.game.create({
+    const client = ensurePrisma();
+    return await client.game.create({
       data: {
         roomCode,
         gameMasterId,
@@ -45,14 +50,16 @@ export const gameService = {
 
   // Get game by room code
   async getGameByRoomCode(roomCode: string) {
-    return await prisma.game.findUnique({
+    const client = ensurePrisma();
+    return await client.game.findUnique({
       where: { roomCode },
     });
   },
 
   // Update game phase
   async updateGamePhase(gameId: string, phase: string) {
-    return await prisma.game.update({
+    const client = ensurePrisma();
+    return await client.game.update({
       where: { id: gameId },
       data: { phase },
     });
@@ -60,7 +67,8 @@ export const gameService = {
 
   // Update current night
   async updateCurrentNight(gameId: string, currentNight: number) {
-    return await prisma.game.update({
+    const client = ensurePrisma();
+    return await client.game.update({
       where: { id: gameId },
       data: { currentNight },
     });
@@ -68,7 +76,8 @@ export const gameService = {
 
   // Get all players in a game
   async getGamePlayers(gameId: string) {
-    return await prisma.player.findMany({
+    const client = ensurePrisma();
+    return await client.player.findMany({
       where: { gameId },
       orderBy: { createdAt: "asc" },
     });
@@ -86,7 +95,8 @@ export const gameService = {
       hasUsedAbility: boolean;
     }
   ) {
-    return await prisma.player.create({
+    const client = ensurePrisma();
+    return await client.player.create({
       data: {
         ...playerData,
         gameId,
@@ -96,7 +106,8 @@ export const gameService = {
 
   // Update player
   async updatePlayer(playerId: string, updates: any) {
-    return await prisma.player.update({
+    const client = ensurePrisma();
+    return await client.player.update({
       where: { id: playerId },
       data: updates,
     });
@@ -104,7 +115,8 @@ export const gameService = {
 
   // Get game settings
   async getGameSettings(gameId: string) {
-    return await prisma.gameSettings.findUnique({
+    const client = ensurePrisma();
+    return await client.gameSettings.findUnique({
       where: { gameId },
     });
   },
@@ -126,7 +138,8 @@ export const gameService = {
       roleCounts: Record<string, number>;
     }
   ) {
-    return await prisma.gameSettings.upsert({
+    const client = ensurePrisma();
+    return await client.gameSettings.upsert({
       where: { gameId },
       update: settings,
       create: {
@@ -146,7 +159,8 @@ export const gameService = {
       data?: any;
     }
   ) {
-    return await prisma.gameAction.create({
+    const client = ensurePrisma();
+    return await client.gameAction.create({
       data: {
         ...action,
         gameId,
@@ -156,7 +170,8 @@ export const gameService = {
 
   // Get game with all related data
   async getGameWithDetails(roomCode: string) {
-    return await prisma.game.findUnique({
+    const client = ensurePrisma();
+    return await client.game.findUnique({
       where: { roomCode },
       include: {
         players: true,
