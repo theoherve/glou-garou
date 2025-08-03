@@ -3,7 +3,7 @@ import { gameService } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
-    const { roomCode, gameMasterId } = await request.json();
+    const { roomCode, gameMasterId, settings } = await request.json();
 
     if (!roomCode || !gameMasterId) {
       return NextResponse.json(
@@ -21,7 +21,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create game
     const game = await gameService.createGame(roomCode, gameMasterId);
+
+    // Create game settings if provided
+    if (settings) {
+      await gameService.upsertGameSettings(game.id, {
+        minPlayers: settings.minPlayers,
+        maxPlayers: settings.maxPlayers,
+        enableLovers: settings.enableLovers,
+        enableVoyante: settings.enableVoyante,
+        enableChasseur: settings.enableChasseur,
+        enableSorciere: settings.enableSorciere,
+        enablePetiteFille: settings.enablePetiteFille,
+        enableCapitaine: settings.enableCapitaine,
+        enableVoleur: settings.enableVoleur,
+        roles: settings.roles,
+        roleCounts: settings.roleCounts,
+      });
+    }
 
     return NextResponse.json(game);
   } catch (error) {

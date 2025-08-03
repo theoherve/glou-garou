@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Crown, Users, Zap, Copy, Eye, Skull } from 'lucide-react';
+import { Moon, Crown, Users, Zap, Eye, Skull } from 'lucide-react';
 import Link from 'next/link';
 import ScaryAnimations from '@/components/ScaryAnimations';
 
@@ -209,22 +209,41 @@ export default function HomePage() {
           </motion.div>
 
           {/* Footer avec icônes effrayantes */}
-          <div
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
             className="text-center"
           >
-            <div className="flex items-center justify-center gap-8 mb-2">
-              <div>
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <motion.div
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              >
                 <Eye className="w-4 h-4 text-[#ff3333]" />
-              </div>
-              <div>
+              </motion.div>
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Skull className="w-4 h-4 text-[#ff9933]" />
+              </motion.div>
+              <motion.div
+                animate={{ rotate: [0, -360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              >
                 <Eye className="w-4 h-4 text-[#ff3333]" />
-              </div>
+              </motion.div>
             </div>
-            <p className="text-[#cccccc] text-sm flex items-center justify-center gap-2">
+            <motion.p 
+              className="text-[#cccccc] text-sm flex items-center justify-center gap-2"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
               Préparez-vous pour une nuit terrifiante...
               <Moon className="w-4 h-4 text-[#ff9933]" />
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
         </motion.div>
       </div>
     </div>

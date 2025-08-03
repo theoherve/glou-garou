@@ -8,7 +8,34 @@ import {
   Role,
   PlayerStatus,
 } from "@/types/game";
-import { gameService } from "@/lib/prisma";
+// API functions for game operations
+const api = {
+  async createGame(roomCode: string, gameMasterId: string, settings: any) {
+    const response = await fetch("/api/games", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomCode, gameMasterId, settings }),
+    });
+    if (!response.ok) throw new Error("Failed to create game");
+    return response.json();
+  },
+
+  async joinGame(roomCode: string, playerName: string) {
+    const response = await fetch("/api/games/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomCode, playerName }),
+    });
+    if (!response.ok) throw new Error("Failed to join game");
+    return response.json();
+  },
+
+  async getGameByRoomCode(roomCode: string) {
+    const response = await fetch(`/api/games/${roomCode}`);
+    if (!response.ok) throw new Error("Game not found");
+    return response.json();
+  },
+};
 
 interface GameStore extends GameState {
   // Actions
@@ -54,23 +81,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   createGame: async (roomCode, gameMasterId, settings) => {
     set({ isLoading: true, error: null });
     try {
-      // Create game in database
-      const dbGame = await gameService.createGame(roomCode, gameMasterId);
-
-      // Create game settings
-      await gameService.upsertGameSettings(dbGame.id, {
-        minPlayers: settings.minPlayers,
-        maxPlayers: settings.maxPlayers,
-        enableLovers: settings.enableLovers,
-        enableVoyante: settings.enableVoyante,
-        enableChasseur: settings.enableChasseur,
-        enableSorciere: settings.enableSorciere,
-        enablePetiteFille: settings.enablePetiteFille,
-        enableCapitaine: settings.enableCapitaine,
-        enableVoleur: settings.enableVoleur,
-        roles: settings.roles,
-        roleCounts: settings.roleCounts,
-      });
+      // Create game via API
+      const dbGame = await api.createGame(roomCode, gameMasterId, settings);
 
       // Convert to local Game type
       const newGame: Game = {
@@ -95,33 +107,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   joinGame: async (roomCode, playerName) => {
     set({ isLoading: true, error: null });
     try {
-      // Get game by room code
-      const game = await gameService.getGameByRoomCode(roomCode);
-      if (!game) {
-        throw new Error("Game not found");
-      }
-
-      // Add player to game
-      const dbPlayer = await gameService.addPlayer(game.id, {
-        name: playerName,
-        role: "villageois", // Will be assigned when game starts
-        status: "alive",
-        isGameMaster: false,
-        isLover: false,
-        hasUsedAbility: false,
-      });
+      // Join game via API
+      const result = await api.joinGame(roomCode, playerName);
 
       // Convert to local Player type
       const newPlayer: Player = {
-        id: dbPlayer.id,
-        name: dbPlayer.name,
-        role: dbPlayer.role as Role,
-        status: dbPlayer.status as PlayerStatus,
-        isGameMaster: dbPlayer.isGameMaster,
-        isLover: dbPlayer.isLover,
-        loverId: dbPlayer.loverId || undefined,
-        hasUsedAbility: dbPlayer.hasUsedAbility,
-        voteTarget: dbPlayer.voteTarget || undefined,
+        id: result.player.id,
+        name: result.player.name,
+        role: result.player.role as Role,
+        status: result.player.status as PlayerStatus,
+        isGameMaster: result.player.isGameMaster,
+        isLover: result.player.isLover,
+        loverId: result.player.loverId || undefined,
+        hasUsedAbility: result.player.hasUsedAbility,
+        voteTarget: result.player.voteTarget || undefined,
       };
 
       set({ currentPlayer: newPlayer, isLoading: false });
