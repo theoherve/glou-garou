@@ -1,5 +1,14 @@
 import { create } from "zustand";
-import { Game, Player, GameState, GamePhase, GameSettings } from "@/types/game";
+import {
+  Game,
+  Player,
+  GameState,
+  GamePhase,
+  GameSettings,
+  Role,
+  PlayerStatus,
+} from "@/types/game";
+import { gameService } from "@/lib/prisma";
 
 interface GameStore extends GameState {
   // Actions
@@ -45,22 +54,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
   createGame: async (roomCode, gameMasterId, settings) => {
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to create game
+      // Create game in database
+      const dbGame = await gameService.createGame(roomCode, gameMasterId);
+
+      // Create game settings
+      await gameService.upsertGameSettings(dbGame.id, {
+        maxPlayers: settings.maxPlayers,
+        enableLovers: settings.enableLovers,
+        enableVoyante: settings.enableVoyante,
+        enableChasseur: settings.enableChasseur,
+        enableSorciere: settings.enableSorciere,
+        enablePetiteFille: settings.enablePetiteFille,
+        enableCapitaine: settings.enableCapitaine,
+        enableVoleur: settings.enableVoleur,
+        roles: settings.roles,
+      });
+
+      // Convert to local Game type
       const newGame: Game = {
-        id:
-          typeof crypto !== "undefined"
-            ? crypto.randomUUID()
-            : Math.random().toString(36).substring(2),
-        roomCode,
-        phase: "waiting",
+        id: dbGame.id,
+        roomCode: dbGame.roomCode,
+        phase: dbGame.phase as GamePhase,
         players: [],
-        gameMasterId,
-        currentNight: 0,
+        gameMasterId: dbGame.gameMasterId,
+        currentNight: dbGame.currentNight,
         eliminatedPlayers: [],
         gameSettings: settings,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date(dbGame.createdAt),
+        updatedAt: new Date(dbGame.updatedAt),
       };
+
       set({ currentGame: newGame, isLoading: false });
     } catch (error) {
       set({ error: "Failed to create game", isLoading: false });
@@ -70,17 +93,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
   joinGame: async (roomCode, playerName) => {
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to join game
-      const newPlayer: Player = {
-        id:
-          typeof crypto !== "undefined"
-            ? crypto.randomUUID()
-            : Math.random().toString(36).substring(2),
+      // Get game by room code
+      const game = await gameService.getGameByRoomCode(roomCode);
+      if (!game) {
+        throw new Error("Game not found");
+      }
+
+      // Add player to game
+      const dbPlayer = await gameService.addPlayer(game.id, {
         name: playerName,
         role: "villageois", // Will be assigned when game starts
         status: "alive",
         isGameMaster: false,
+        isLover: false,
+        hasUsedAbility: false,
+      });
+
+      // Convert to local Player type
+      const newPlayer: Player = {
+        id: dbPlayer.id,
+        name: dbPlayer.name,
+        role: dbPlayer.role as Role,
+        status: dbPlayer.status as PlayerStatus,
+        isGameMaster: dbPlayer.isGameMaster,
+        isLover: dbPlayer.isLover,
+        loverId: dbPlayer.loverId || undefined,
+        hasUsedAbility: dbPlayer.hasUsedAbility,
+        voteTarget: dbPlayer.voteTarget || undefined,
       };
+
       set({ currentPlayer: newPlayer, isLoading: false });
     } catch (error) {
       set({ error: "Failed to join game", isLoading: false });
