@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id        String   @id @default(cuid())
+  roomCode  String   @unique
+  phase     String   @default("waiting") // waiting, preparation, night, day, voting, ended
+  gameMasterId String
+  currentNight Int    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  players Player[]
+  gameSettings GameSettings?
+  gameActions GameAction[]
+
+  @@map("games")
+}
+
+model Player {
+  id        String @id @default(cuid())
+  name      String
+  role      String // loup-garou, villageois, voyante, chasseur, cupidon, sorciere, petite-fille, capitaine, voleur
+  status    String @default("alive") // alive, dead, eliminated
+  isGameMaster Boolean @default(false)
+  isLover   Boolean @default(false)
+  loverId   String?
+  hasUsedAbility Boolean @default(false)
+  voteTarget String?
+  
+  // Relations
+  gameId    String
+  game      Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  lover     Player? @relation("Lovers", fields: [loverId], references: [id])
+  lovedBy   Player? @relation("Lovers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("players")
+}
+
+model GameSettings {
+  id        String @id @default(cuid())
+  
+  // Game configuration
+  maxPlayers Int @default(8)
+  enableLovers Boolean @default(false)
+  enableVoyante Boolean @default(false)
+  enableChasseur Boolean @default(false)
+  enableSorciere Boolean @default(false)
+  enablePetiteFille Boolean @default(false)
+  enableCapitaine Boolean @default(false)
+  enableVoleur Boolean @default(false)
+  
+  // Role distribution
+  roles     String[] // Array of role IDs
+  
+  // Relations
+  gameId    String @unique
+  game      Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("game_settings")
+}
+
+model GameAction {
+  id        String @id @default(cuid())
+  type      String // vote, useAbility, revealRole, eliminatePlayer
+  playerId  String
+  targetId  String?
+  data      Json? // Additional data for the action
+  
+  // Relations
+  gameId    String
+  game      Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("game_actions")
+}
+
+model GameSession {
+  id        String @id @default(cuid())
+  gameId    String
+  playerId  String
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  isActive  Boolean @default(true)
+
+  @@map("game_sessions")
+}
