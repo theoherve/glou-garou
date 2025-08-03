@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Settings, Play, Eye } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Play, Eye, Moon } from 'lucide-react';
 import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAllRoles, getDefaultRoles, RoleData } from '@/data/roles';
@@ -57,8 +57,15 @@ export default function CreateGamePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#1a1a1a] relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-32 h-32 bg-red-500/10 rounded-full blur-xl pulse-glow"></div>
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-orange-500/10 rounded-full blur-xl pulse-glow" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-orange-500/5 rounded-full blur-2xl pulse-glow" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -67,14 +74,17 @@ export default function CreateGamePage() {
         >
           <Link href="/">
             <motion.button
-              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              className="p-2 rounded-lg bg-[#2a2a2a] hover:bg-[#333333] transition-colors border border-[#ff3333]/20"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-[#e0e0e0]" />
             </motion.button>
           </Link>
-          <h1 className="text-3xl font-bold text-white">Créer une partie</h1>
+          <div className="flex items-center gap-3">
+            <Crown className="w-8 h-8 text-[#ff9933]" />
+            <h1 className="text-3xl font-bold text-[#e0e0e0]">Créer une partie</h1>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -86,38 +96,38 @@ export default function CreateGamePage() {
             className="space-y-6"
           >
             {/* Basic settings */}
-            <div className="bg-white/5 rounded-lg p-6 backdrop-blur-sm border border-white/10">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <Settings className="w-5 h-5" />
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+              <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-[#ff9933]" />
                 Configuration de base
               </h2>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-300 mb-2">Nom du maître du jeu</label>
+                  <label className="block text-[#e0e0e0] mb-2">Nom du maître du jeu</label>
                   <input
                     type="text"
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
-                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+                    className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
                     placeholder="Votre nom"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 mb-2">Code de la salle</label>
+                  <label className="block text-[#e0e0e0] mb-2">Code de la salle</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={roomCode}
                       onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                      className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
+                      className="flex-1 px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors"
                       placeholder="Code de 6 caractères"
                       maxLength={6}
                     />
                     <button
                       onClick={generateRoomCode}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                      className="px-4 py-3 bg-[#ff3333] hover:bg-[#e62e2e] text-white rounded-lg transition-colors font-semibold"
                     >
                       Générer
                     </button>
@@ -125,16 +135,16 @@ export default function CreateGamePage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-300 mb-2">Nombre maximum de joueurs</label>
-                  <div className="flex gap-2">
+                  <label className="block text-[#e0e0e0] mb-2">Nombre maximum de joueurs</label>
+                  <div className="flex gap-2 flex-wrap">
                     {[6, 8, 10, 12, 15, 18].map(num => (
                       <button
                         key={num}
                         onClick={() => handleMaxPlayersChange(num)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${
+                        className={`px-4 py-2 rounded-lg transition-colors font-semibold ${
                           maxPlayers === num
-                            ? 'bg-red-600 text-white'
-                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                            ? 'bg-[#ff3333] text-white'
+                            : 'bg-[#1a1a1a] text-[#e0e0e0] hover:bg-[#333333] border border-[#333333]'
                         }`}
                       >
                         {num}
@@ -146,9 +156,9 @@ export default function CreateGamePage() {
             </div>
 
             {/* Role selection */}
-            <div className="bg-white/5 rounded-lg p-6 backdrop-blur-sm border border-white/10">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <Eye className="w-5 h-5" />
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+              <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-[#ff9933]" />
                 Sélection des rôles ({selectedRoles.length})
               </h2>
               
@@ -159,8 +169,8 @@ export default function CreateGamePage() {
                     onClick={() => handleRoleToggle(role.id)}
                     className={`p-3 rounded-lg border transition-all duration-200 text-left ${
                       selectedRoles.includes(role.id)
-                        ? 'bg-red-600/20 border-red-500 text-white'
-                        : 'bg-white/5 border-white/20 text-gray-300 hover:bg-white/10'
+                        ? 'bg-[#ff3333]/20 border-[#ff3333] text-[#e0e0e0]'
+                        : 'bg-[#1a1a1a] border-[#333333] text-[#cccccc] hover:bg-[#333333]'
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -185,37 +195,37 @@ export default function CreateGamePage() {
             className="space-y-6"
           >
             {/* Game preview */}
-            <div className="bg-white/5 rounded-lg p-6 backdrop-blur-sm border border-white/10">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                <Crown className="w-5 h-5" />
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+              <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
+                <Crown className="w-5 h-5 text-[#ff9933]" />
                 Aperçu de la partie
               </h2>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Maître du jeu:</span>
-                  <span className="text-white font-semibold">{playerName || 'Non défini'}</span>
+                  <span className="text-[#cccccc]">Maître du jeu:</span>
+                  <span className="text-[#e0e0e0] font-semibold">{playerName || 'Non défini'}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Code de salle:</span>
-                  <span className="text-white font-mono font-semibold">{roomCode || 'Non défini'}</span>
+                  <span className="text-[#cccccc]">Code de salle:</span>
+                  <span className="text-[#e0e0e0] font-mono font-semibold">{roomCode || 'Non défini'}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Joueurs max:</span>
-                  <span className="text-white font-semibold">{maxPlayers}</span>
+                  <span className="text-[#cccccc]">Joueurs max:</span>
+                  <span className="text-[#e0e0e0] font-semibold">{maxPlayers}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-300">Rôles sélectionnés:</span>
-                  <span className="text-white font-semibold">{selectedRoles.length}</span>
+                  <span className="text-[#cccccc]">Rôles sélectionnés:</span>
+                  <span className="text-[#e0e0e0] font-semibold">{selectedRoles.length}</span>
                 </div>
               </div>
 
               {/* Role breakdown */}
               <div className="mt-6">
-                <h3 className="text-lg font-semibold text-white mb-3">Répartition des rôles</h3>
+                <h3 className="text-lg font-semibold text-[#e0e0e0] mb-3">Répartition des rôles</h3>
                 <div className="space-y-2">
                   {Object.entries(
                     selectedRoles.reduce((acc, role) => {
@@ -224,8 +234,8 @@ export default function CreateGamePage() {
                     }, {} as Record<string, number>)
                   ).map(([role, count]) => (
                     <div key={role} className="flex items-center justify-between">
-                      <span className="text-gray-300">{getRoleData(role as Role).name}:</span>
-                      <span className="text-white font-semibold">{count}</span>
+                      <span className="text-[#cccccc]">{getRoleData(role as Role).name}:</span>
+                      <span className="text-[#e0e0e0] font-semibold">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -236,7 +246,7 @@ export default function CreateGamePage() {
             <motion.button
               onClick={handleCreateGame}
               disabled={!playerName.trim() || !roomCode.trim() || isLoading}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
+              className="w-full bg-[#ff3333] hover:bg-[#e62e2e] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -254,9 +264,9 @@ export default function CreateGamePage() {
             </motion.button>
 
             {/* Tips */}
-            <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-              <h3 className="text-blue-400 font-semibold mb-2">💡 Conseils</h3>
-              <ul className="text-sm text-gray-300 space-y-1">
+            <div className="bg-[#333a45]/20 rounded-lg p-4 border border-[#333a45]/30">
+              <h3 className="text-[#ff9933] font-semibold mb-2">💡 Conseils</h3>
+              <ul className="text-sm text-[#cccccc] space-y-1">
                 <li>• Partagez le code de salle avec vos amis pour qu&apos;ils puissent rejoindre</li>
                 <li>• Assurez-vous d&apos;avoir au moins 1 loup-garou et 1 villageois</li>
                 <li>• Les rôles spéciaux ajoutent de la stratégie au jeu</li>
