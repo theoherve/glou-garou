@@ -8,34 +8,7 @@ import {
   Role,
   PlayerStatus,
 } from "@/types/game";
-// API functions for game operations
-const api = {
-  async createGame(roomCode: string, gameMasterId: string, settings: any) {
-    const response = await fetch("/api/games", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomCode, gameMasterId, settings }),
-    });
-    if (!response.ok) throw new Error("Failed to create game");
-    return response.json();
-  },
-
-  async joinGame(roomCode: string, playerName: string) {
-    const response = await fetch("/api/games/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomCode, playerName }),
-    });
-    if (!response.ok) throw new Error("Failed to join game");
-    return response.json();
-  },
-
-  async getGameByRoomCode(roomCode: string) {
-    const response = await fetch(`/api/games/${roomCode}`);
-    if (!response.ok) throw new Error("Game not found");
-    return response.json();
-  },
-};
+import { gameApi, playerApi, gameActionApi } from "@/lib/gameApi";
 
 interface GameStore extends GameState {
   // Actions
@@ -81,23 +54,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   createGame: async (roomCode, gameMasterId, settings) => {
     set({ isLoading: true, error: null });
     try {
-      // Create game via API
-      const dbGame = await api.createGame(roomCode, gameMasterId, settings);
-
-      // Convert to local Game type
-      const newGame: Game = {
-        id: dbGame.id,
-        roomCode: dbGame.roomCode,
-        phase: dbGame.phase as GamePhase,
-        players: [],
-        gameMasterId: dbGame.gameMasterId,
-        currentNight: dbGame.currentNight,
-        eliminatedPlayers: [],
-        gameSettings: settings,
-        createdAt: new Date(dbGame.createdAt),
-        updatedAt: new Date(dbGame.updatedAt),
-      };
-
+      // Create game via Supabase API
+      const newGame = await gameApi.createGame(
+        roomCode,
+        gameMasterId,
+        settings
+      );
       set({ currentGame: newGame, isLoading: false });
     } catch (error) {
       set({ error: "Failed to create game", isLoading: false });
@@ -107,22 +69,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   joinGame: async (roomCode, playerName) => {
     set({ isLoading: true, error: null });
     try {
-      // Join game via API
-      const result = await api.joinGame(roomCode, playerName);
+      // Get game by room code first
+      const game = await gameApi.getGameByRoomCode(roomCode);
+      if (!game) {
+        throw new Error("Game not found");
+      }
 
-      // Convert to local Player type
-      const newPlayer: Player = {
-        id: result.player.id,
-        name: result.player.name,
-        role: result.player.role as Role,
-        status: result.player.status as PlayerStatus,
-        isGameMaster: result.player.isGameMaster,
-        isLover: result.player.isLover,
-        loverId: result.player.loverId || undefined,
-        hasUsedAbility: result.player.hasUsedAbility,
-        voteTarget: result.player.voteTarget || undefined,
-      };
-
+      // Join game via Supabase API
+      const newPlayer = await playerApi.joinGame(game.id, playerName);
       set({ currentPlayer: newPlayer, isLoading: false });
     } catch (error) {
       set({ error: "Failed to join game", isLoading: false });
