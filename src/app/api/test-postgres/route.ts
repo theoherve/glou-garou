@@ -26,7 +26,11 @@ export async function GET() {
 
     // Test 3: Créer les tables si elles n'existent pas
     let tablesCreated = null;
-    if (tablesCheck.success && tablesCheck.tables.length < 3) {
+    if (
+      tablesCheck.success &&
+      tablesCheck.tables &&
+      tablesCheck.tables.length < 3
+    ) {
       tablesCreated = await createTablesIfNotExist();
     }
 

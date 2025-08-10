@@ -1,7 +1,17 @@
+'use client';
+
+import dynamic from 'next/dynamic';
 import { SupabaseTest } from "@/components/SupabaseTest";
+import { SimpleSupabaseTest } from "@/components/SimpleSupabaseTest";
 import { SupabaseStatus } from "@/components/SupabaseStatus";
 import { EnvDebug } from "@/components/EnvDebug";
 import { NetworkTest } from "@/components/NetworkTest";
+
+// Dynamically import RealtimeTest to prevent build issues
+const RealtimeTest = dynamic(() => import('@/components/RealtimeTest'), {
+  ssr: false,
+  loading: () => <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#ff3333]/20">Chargement du test Realtime...</div>
+});
 
 export default function TestSupabasePage() {
   return (
@@ -19,7 +29,21 @@ export default function TestSupabasePage() {
       </div>
       
       <NetworkTest />
-      <SupabaseTest />
+      
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">Test Simple</h2>
+        <SimpleSupabaseTest />
+      </div>
+      
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">Test Complet</h2>
+        <SupabaseTest />
+      </div>
+      
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">Test Realtime</h2>
+        <RealtimeTest />
+      </div>
       
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded">
         <h3 className="font-semibold text-yellow-800 mb-2">Instructions :</h3>

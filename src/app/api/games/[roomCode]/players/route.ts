@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { gameService } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   request: NextRequest,
@@ -8,12 +8,31 @@ export async function GET(
   const { roomCode } = await params;
   try {
     // Get game by room code first
-    const game = await gameService.getGameByRoomCode(roomCode);
-    if (!game) {
+    const { data: game, error: gameError } = await supabase
+      .from("games")
+      .select("id")
+      .eq("room_code", roomCode)
+      .single();
+
+    if (gameError || !game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    const players = await gameService.getGamePlayers(game.id);
+    // Get all players in the game
+    const { data: players, error: playersError } = await supabase
+      .from("players")
+      .select("*")
+      .eq("game_id", game.id)
+      .order("created_at", { ascending: true });
+
+    if (playersError) {
+      console.error("Error fetching players:", playersError);
+      return NextResponse.json(
+        { error: "Failed to fetch players" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(players);
   } catch (error) {
     console.error("Error fetching players:", error);
@@ -40,19 +59,40 @@ export async function POST(
     }
 
     // Get game by room code first
-    const game = await gameService.getGameByRoomCode(roomCode);
-    if (!game) {
+    const { data: game, error: gameError } = await supabase
+      .from("games")
+      .select("id")
+      .eq("room_code", roomCode)
+      .single();
+
+    if (gameError || !game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    const player = await gameService.addPlayer(game.id, {
-      name: playerData.name,
-      role: playerData.role,
-      status: "alive",
-      isGameMaster: playerData.isGameMaster || false,
-      isLover: false,
-      hasUsedAbility: false,
-    });
+    // Create the player
+    const { data: player, error: playerError } = await supabase
+      .from("players")
+      .insert({
+        game_id: game.id,
+        name: playerData.name,
+        role: playerData.role,
+        status: "alive",
+        is_game_master: playerData.isGameMaster || false,
+        is_lover: false,
+        has_used_ability: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (playerError) {
+      console.error("Error creating player:", playerError);
+      return NextResponse.json(
+        { error: "Failed to create player" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(player);
   } catch (error) {

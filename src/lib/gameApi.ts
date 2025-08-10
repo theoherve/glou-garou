@@ -16,32 +16,48 @@ export const gameApi = {
     gameMasterId: string,
     settings: GameSettings
   ): Promise<Game> {
-    const { data, error } = await supabase
-      .from("games")
-      .insert({
-        room_code: roomCode,
-        game_master_id: gameMasterId,
-        phase: "waiting",
-        current_night: 0,
-        game_settings: settings,
-      })
-      .select()
-      .single();
+    console.log("gameApi.createGame appelé avec:", {
+      roomCode,
+      gameMasterId,
+      settings,
+    });
 
-    if (error) throw error;
+    try {
+      const { data, error } = await supabase
+        .from("games")
+        .insert({
+          room_code: roomCode,
+          game_master_id: gameMasterId,
+          phase: "waiting",
+          current_night: 0,
+          game_settings: settings,
+        })
+        .select()
+        .single();
 
-    return {
-      id: data.id,
-      roomCode: data.room_code,
-      phase: data.phase as GamePhase,
-      players: [],
-      gameMasterId: data.game_master_id,
-      currentNight: data.current_night,
-      eliminatedPlayers: [],
-      gameSettings: data.game_settings,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    };
+      if (error) {
+        console.error("Erreur Supabase lors de la création du jeu:", error);
+        throw new Error(`Erreur Supabase: ${error.message}`);
+      }
+
+      console.log("Jeu créé avec succès dans Supabase:", data);
+
+      return {
+        id: data.id,
+        roomCode: data.room_code,
+        phase: data.phase as GamePhase,
+        players: [],
+        gameMasterId: data.game_master_id,
+        currentNight: data.current_night,
+        eliminatedPlayers: [],
+        gameSettings: data.game_settings,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error("Erreur dans createGame:", error);
+      throw error;
+    }
   },
 
   async getGameByRoomCode(roomCode: string): Promise<Game | null> {

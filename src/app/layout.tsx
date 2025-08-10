@@ -31,7 +31,9 @@ export default function RootLayout({
         className={`${creepster.variable} ${crimsonPro.variable} antialiased`}
       >
         {children}
+        {/* Temporairement désactivé - remplacé par Supabase Realtime
         <SocketStatus />
+        */}
       </body>
     </html>
   );

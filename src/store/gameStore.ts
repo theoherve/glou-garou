@@ -60,9 +60,44 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameMasterId,
         settings
       );
-      set({ currentGame: newGame, isLoading: false });
+
+      // Créer le joueur maître de jeu
+      const gameMasterPlayer = await playerApi.joinGame(
+        newGame.id,
+        "Game Master" // Nom temporaire, sera mis à jour plus tard
+      );
+
+      // Mettre à jour le joueur pour le marquer comme maître de jeu
+      await playerApi.updatePlayer(gameMasterPlayer.id, {
+        isGameMaster: true,
+        role: "villageois", // Rôle par défaut pour le maître de jeu
+      });
+
+      // Créer un objet Player complet pour le maître de jeu
+      const updatedGameMaster: Player = {
+        ...gameMasterPlayer,
+        isGameMaster: true,
+        role: "villageois",
+      };
+
+      // Mettre à jour le jeu avec le joueur maître
+      const gameWithMaster = {
+        ...newGame,
+        players: [updatedGameMaster],
+      };
+
+      set({
+        currentGame: gameWithMaster,
+        currentPlayer: updatedGameMaster,
+        isLoading: false,
+      });
+
+      console.log("Jeu créé avec succès:", gameWithMaster);
+      console.log("Joueur maître créé:", updatedGameMaster);
     } catch (error) {
+      console.error("Erreur dans createGame store:", error);
       set({ error: "Failed to create game", isLoading: false });
+      throw error; // Re-lancer l'erreur pour la gestion dans le composant
     }
   },
 
@@ -89,13 +124,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to start game
-      const updatedGame = {
-        ...currentGame,
-        phase: "preparation" as GamePhase,
-        updatedAt: new Date(),
-      };
-      set({ currentGame: updatedGame, isLoading: false });
+      // L'état sera mis à jour via DatabaseSync après la réponse de l'API
+      set({ isLoading: false });
     } catch (error) {
       set({ error: "Failed to start game", isLoading: false });
     }
@@ -107,16 +137,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to vote
-      const updatedPlayers = currentGame.players.map((player) =>
-        player.id === playerId ? { ...player, voteTarget: targetId } : player
-      );
-      const updatedGame = {
-        ...currentGame,
-        players: updatedPlayers,
-        updatedAt: new Date(),
-      };
-      set({ currentGame: updatedGame, isLoading: false });
+      // L'état sera mis à jour via DatabaseSync après la réponse de l'API
+      set({ isLoading: false });
     } catch (error) {
       set({ error: "Failed to vote", isLoading: false });
     }
@@ -149,19 +171,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to eliminate player
-      const updatedPlayers = currentGame.players.map((player) =>
-        player.id === playerId
-          ? { ...player, status: "eliminated" as const }
-          : player
-      );
-      const updatedGame = {
-        ...currentGame,
-        players: updatedPlayers,
-        eliminatedPlayers: [...currentGame.eliminatedPlayers, playerId],
-        updatedAt: new Date(),
-      };
-      set({ currentGame: updatedGame, isLoading: false });
+      // L'état sera mis à jour via DatabaseSync après la réponse de l'API
+      set({ isLoading: false });
     } catch (error) {
       set({ error: "Failed to eliminate player", isLoading: false });
     }
@@ -173,27 +184,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement API call to next phase
-      const phaseOrder: GamePhase[] = [
-        "waiting",
-        "preparation",
-        "night",
-        "day",
-        "voting",
-      ];
-      const currentIndex = phaseOrder.indexOf(currentGame.phase);
-      const nextPhase = phaseOrder[(currentIndex + 1) % phaseOrder.length];
-
-      const updatedGame = {
-        ...currentGame,
-        phase: nextPhase,
-        currentNight:
-          nextPhase === "night"
-            ? currentGame.currentNight + 1
-            : currentGame.currentNight,
-        updatedAt: new Date(),
-      };
-      set({ currentGame: updatedGame, isLoading: false });
+      // L'état sera mis à jour via DatabaseSync après la réponse de l'API
+      set({ isLoading: false });
     } catch (error) {
       set({ error: "Failed to advance phase", isLoading: false });
     }

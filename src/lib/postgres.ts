@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 
-const postgresUrl = process.env.POSTGRES_URL_NON_POOLING;
+const postgresUrl = process.env.GLOU_GAROU_POSTGRES_URL_NON_POOLING;
 
 if (!postgresUrl) {
   throw new Error("GLOU_GAROU_POSTGRES_URL_NON_POOLING is required");
@@ -9,12 +9,14 @@ if (!postgresUrl) {
 // Créer un pool de connexions PostgreSQL
 export const postgresPool = new Pool({
   connectionString: postgresUrl,
-  ssl: {
-    rejectUnauthorized: false,
-    ca: undefined,
-    key: undefined,
-    cert: undefined,
-  },
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          rejectUnauthorized: true,
+        }
+      : {
+          rejectUnauthorized: false,
+        },
 });
 
 // Fonction pour tester la connexion

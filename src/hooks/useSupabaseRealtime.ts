@@ -2,201 +2,424 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import {
+  RealtimeChannel,
+  RealtimeChannelSendResponse,
+} from "@supabase/supabase-js";
 
 interface UseSupabaseRealtimeReturn {
   isConnected: boolean;
-  joinGame: (roomCode: string) => void;
-  leaveGame: (roomCode: string) => void;
-  updateGameState: (roomCode: string, gameState: any) => void;
-  sendPlayerAction: (roomCode: string, action: any) => void;
-  sendNightAction: (roomCode: string, playerId: string, action: any) => void;
-  sendVote: (roomCode: string, voterId: string, targetId: string) => void;
-  sendPhaseChange: (roomCode: string, phase: string) => void;
-  eliminatePlayer: (roomCode: string, playerId: string) => void;
-  revealRole: (roomCode: string, playerId: string, role: string) => void;
+  isConnecting: boolean;
+  error: string | null;
+  joinGame: (roomCode: string) => Promise<void>;
+  leaveGame: (roomCode: string) => Promise<void>;
+  updateGameState: (
+    roomCode: string,
+    gameState: any
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  sendPlayerAction: (
+    roomCode: string,
+    action: any
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  sendNightAction: (
+    roomCode: string,
+    playerId: string,
+    action: any
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  sendVote: (
+    roomCode: string,
+    voterId: string,
+    targetId: string
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  sendPhaseChange: (
+    roomCode: string,
+    phase: string,
+    currentNight?: number
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  eliminatePlayer: (
+    roomCode: string,
+    playerId: string
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  revealRole: (
+    roomCode: string,
+    playerId: string,
+    role: string
+  ) => Promise<RealtimeChannelSendResponse | null>;
+  getConnectedPlayers: () => any[];
 }
 
-export const useSupabaseRealtime = (): UseSupabaseRealtimeReturn => {
+export const useSupabaseRealtime = (
+  currentPlayerId?: string
+): UseSupabaseRealtimeReturn => {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
 
-  const joinGame = useCallback(async (roomCode: string) => {
-    if (channelRef.current) {
-      await channelRef.current.unsubscribe();
-    }
+  const joinGame = useCallback(
+    async (roomCode: string) => {
+      if (isConnecting || isConnected) return;
 
-    // Créer un canal pour ce jeu
-    const channel = supabase.channel(`game:${roomCode}`, {
-      config: {
-        presence: {
-          key: roomCode,
-        },
-      },
-    });
+      setIsConnecting(true);
+      setError(null);
 
-    // Écouter les changements de présence (joueurs qui rejoignent/quittent)
-    channel
-      .on("presence", { event: "sync" }, () => {
-        console.log("Presence sync");
-      })
-      .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        console.log("Player joined:", newPresences);
-      })
-      .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        console.log("Player left:", leftPresences);
-      })
-      .on("broadcast", { event: "gameStateUpdated" }, (payload) => {
-        console.log("Game state updated:", payload);
-        // Émettre un événement personnalisé pour le composant
-        window.dispatchEvent(
-          new CustomEvent("gameStateUpdated", { detail: payload.payload })
+      try {
+        console.log(
+          "🔄 Tentative de connexion au canal Realtime:",
+          `game:${roomCode}`
         );
-      })
-      .on("broadcast", { event: "playerAction" }, (payload) => {
-        console.log("Player action received:", payload);
-        window.dispatchEvent(
-          new CustomEvent("playerActionReceived", { detail: payload.payload })
-        );
-      })
-      .on("broadcast", { event: "nightAction" }, (payload) => {
-        console.log("Night action received:", payload);
-        window.dispatchEvent(
-          new CustomEvent("nightActionReceived", { detail: payload.payload })
-        );
-      })
-      .on("broadcast", { event: "vote" }, (payload) => {
-        console.log("Vote received:", payload);
-        window.dispatchEvent(
-          new CustomEvent("voteReceived", { detail: payload.payload })
-        );
-      })
-      .on("broadcast", { event: "phaseChange" }, (payload) => {
-        console.log("Phase changed:", payload);
-        window.dispatchEvent(
-          new CustomEvent("phaseChanged", { detail: payload.payload })
-        );
-      })
-      .on("broadcast", { event: "playerEliminated" }, (payload) => {
-        console.log("Player eliminated:", payload);
-        window.dispatchEvent(
-          new CustomEvent("playerEliminated", { detail: payload.payload })
-        );
-      })
-      .on("broadcast", { event: "roleRevealed" }, (payload) => {
-        console.log("Role revealed:", payload);
-        window.dispatchEvent(
-          new CustomEvent("roleRevealed", { detail: payload.payload })
-        );
-      });
 
-    // S'abonner au canal
-    const status = await channel.subscribe((status) => {
-      console.log("Channel status:", status);
-      setIsConnected(status === "SUBSCRIBED");
-    });
+        const channel = supabase.channel(`game:${roomCode}`);
 
-    channelRef.current = channel;
-  }, []);
+        // Écouter les messages de présence
+        channel.on("presence", { event: "sync" }, () => {
+          console.log("✅ Présence synchronisée");
+          const presenceState = channel.presenceState();
+          const players = Object.values(presenceState).flat();
+          setConnectedPlayers(players);
+        });
+
+        // Écouter les messages broadcast
+        channel.on("broadcast", { event: "*" }, (payload) => {
+          console.log("📡 Message broadcast reçu:", payload);
+        });
+
+        // Écouter les changements de présence
+        channel.on("presence", { event: "join" }, ({ key, newPresences }) => {
+          console.log("👋 Joueur rejoint:", newPresences);
+          setConnectedPlayers((prev) => [...prev, ...newPresences]);
+        });
+
+        channel.on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+          console.log("👋 Joueur quitte:", leftPresences);
+          setConnectedPlayers((prev) =>
+            prev.filter(
+              (p) => !leftPresences.some((lp) => lp.user_id === p.user_id)
+            )
+          );
+        });
+
+        // Écouter les événements système
+        channel.on("system", { event: "*" }, (payload) => {
+          console.log("🔧 Événement système:", payload);
+        });
+
+        console.log("📡 S'abonnement au canal...");
+
+        // S'abonner au canal
+        await channel.subscribe();
+
+        console.log("✅ Abonnement réussi, attente de la connexion...");
+
+        // Attendre que la connexion soit établie
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            console.log("⏰ Timeout de connexion atteint");
+            reject(new Error("Connection timeout"));
+          }, 10000); // Augmenté à 10 secondes
+
+          // Vérifier périodiquement l'état de la connexion
+          const checkConnection = () => {
+            console.log("🔍 Vérification de l'état de la connexion...");
+
+            // Vérifier si le canal est connecté
+            if (channel.state === "joined") {
+              console.log("✅ Canal connecté avec succès (état: joined)");
+              clearTimeout(timeout);
+              resolve(true);
+              return;
+            }
+
+            // Vérifier si le canal est en cours de connexion
+            if (channel.state === "joining") {
+              console.log("⏳ Canal en cours de connexion (état: joining)");
+              // Continuer à vérifier
+              setTimeout(checkConnection, 500);
+              return;
+            }
+
+            // Vérifier si le canal a une erreur
+            if (channel.state === "errored") {
+              console.log("❌ Canal en erreur (état: errored)");
+              clearTimeout(timeout);
+              reject(new Error("Canal en erreur"));
+              return;
+            }
+
+            console.log(`🔄 État actuel du canal: ${channel.state}`);
+            // Continuer à vérifier
+            setTimeout(checkConnection, 500);
+          };
+
+          // Démarrer la vérification après un court délai
+          setTimeout(checkConnection, 100);
+        });
+
+        setIsConnected(true);
+        setIsConnecting(false);
+        console.log("🎉 Connexion Realtime établie avec succès!");
+
+        // Écouter les erreurs de connexion
+        channel.on("system", { event: "error" }, (error) => {
+          console.error("❌ Erreur de canal:", error);
+          setError("Erreur de connexion au canal");
+        });
+
+        // Écouter la déconnexion
+        channel.on("system", { event: "leave" }, () => {
+          console.log("🔌 Déconnecté du canal");
+          setIsConnected(false);
+          setError("Déconnecté du canal");
+        });
+
+        channelRef.current = channel;
+
+        // Rejoindre la présence avec les informations du joueur
+        console.log("👤 Rejoindre la présence...");
+        await channel.track({
+          user_id: currentPlayerId || `player-${Date.now()}`,
+          room_code: roomCode,
+          joined_at: new Date().toISOString(),
+        });
+
+        console.log("✅ Présence rejointe avec succès");
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        console.error("❌ Erreur lors de la connexion au jeu:", err);
+        setError(`Failed to join game: ${errorMessage}`);
+        setIsConnecting(false);
+
+        // Nettoyer le canal en cas d'erreur
+        if (channelRef.current) {
+          try {
+            await channelRef.current.unsubscribe();
+          } catch (cleanupError) {
+            console.error("Erreur lors du nettoyage:", cleanupError);
+          }
+          channelRef.current = null;
+        }
+      }
+    },
+    [currentPlayerId, isConnected, isConnecting]
+  );
 
   const leaveGame = useCallback(async (roomCode: string) => {
-    if (channelRef.current) {
-      await channelRef.current.unsubscribe();
-      channelRef.current = null;
+    try {
+      if (channelRef.current) {
+        // Arrêter de tracker la présence
+        await channelRef.current.untrack();
+
+        // Se désabonner du canal
+        await channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+
       setIsConnected(false);
+      setIsConnecting(false);
+      setError(null);
+      setConnectedPlayers([]);
+    } catch (err) {
+      console.error("Error leaving game:", err);
     }
   }, []);
+
+  const sendMessage = useCallback(
+    async (
+      event: string,
+      payload: any
+    ): Promise<RealtimeChannelSendResponse | null> => {
+      if (!channelRef.current || !isConnected) {
+        setError("Not connected to game channel");
+        return null;
+      }
+
+      try {
+        const response = await channelRef.current.send({
+          type: "broadcast",
+          event,
+          payload,
+        });
+
+        if (response === "error") {
+          setError("Failed to send message");
+          return null;
+        }
+
+        return response;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(`Failed to send message: ${errorMessage}`);
+        return null;
+      }
+    },
+    [isConnected]
+  );
 
   const updateGameState = useCallback(
     async (roomCode: string, gameState: any) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "gameStateUpdated",
-          payload: { roomCode, gameState },
-        });
-      }
+      return sendMessage("gameStateUpdated", { roomCode, gameState });
     },
-    []
+    [sendMessage]
   );
 
   const sendPlayerAction = useCallback(
     async (roomCode: string, action: any) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "playerAction",
-          payload: { roomCode, action },
+      try {
+        // Enregistrer l'action dans la base de données
+        const response = await fetch(`/api/games/${roomCode}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionType: action.type,
+            playerId: action.playerId,
+            targetId: action.targetId,
+            actionData: action.data,
+          }),
         });
+
+        if (!response.ok) {
+          console.error("Failed to save action to database");
+        }
+      } catch (error) {
+        console.error("Error saving action to database:", error);
       }
+
+      return sendMessage("playerAction", { roomCode, action });
     },
-    []
+    [sendMessage]
   );
 
   const sendNightAction = useCallback(
     async (roomCode: string, playerId: string, action: any) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "nightAction",
-          payload: { roomCode, playerId, action },
-        });
-      }
+      return sendMessage("nightAction", { roomCode, playerId, action });
     },
-    []
+    [sendMessage]
   );
 
   const sendVote = useCallback(
     async (roomCode: string, voterId: string, targetId: string) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "vote",
-          payload: { roomCode, voterId, targetId },
+      try {
+        // Enregistrer le vote dans la base de données
+        const response = await fetch(`/api/games/${roomCode}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionType: "vote",
+            playerId: voterId,
+            targetId: targetId,
+            actionData: null,
+          }),
         });
+
+        if (!response.ok) {
+          console.error("Failed to save vote to database");
+        }
+      } catch (error) {
+        console.error("Error saving vote to database:", error);
       }
+
+      return sendMessage("vote", { roomCode, voterId, targetId });
     },
-    []
+    [sendMessage]
   );
 
   const sendPhaseChange = useCallback(
-    async (roomCode: string, phase: string) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "phaseChange",
-          payload: { roomCode, phase },
+    async (roomCode: string, phase: string, currentNight?: number) => {
+      try {
+        // Enregistrer le changement de phase dans la base de données
+        const response = await fetch(`/api/games/${roomCode}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionType: "phase_change",
+            playerId: "system", // Action système
+            targetId: null,
+            actionData: { phase, current_night: currentNight },
+          }),
         });
+
+        if (!response.ok) {
+          console.error("Failed to save phase change to database");
+        }
+      } catch (error) {
+        console.error("Error saving phase change to database:", error);
       }
+
+      return sendMessage("phaseChange", { roomCode, phase, currentNight });
     },
-    []
+    [sendMessage]
   );
 
   const eliminatePlayer = useCallback(
     async (roomCode: string, playerId: string) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "playerEliminated",
-          payload: { roomCode, playerId },
+      try {
+        // Enregistrer l'élimination dans la base de données
+        const response = await fetch(`/api/games/${roomCode}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionType: "player_elimination",
+            playerId: "system", // Action système
+            targetId: playerId,
+            actionData: null,
+          }),
         });
+
+        if (!response.ok) {
+          console.error("Failed to save player elimination to database");
+        }
+      } catch (error) {
+        console.error("Error saving player elimination to database:", error);
       }
+
+      return sendMessage("playerEliminated", { roomCode, playerId });
     },
-    []
+    [sendMessage]
   );
 
   const revealRole = useCallback(
     async (roomCode: string, playerId: string, role: string) => {
-      if (channelRef.current) {
-        await channelRef.current.send({
-          type: "broadcast",
-          event: "roleRevealed",
-          payload: { roomCode, playerId, role },
+      try {
+        // Enregistrer la révélation de rôle dans la base de données
+        const response = await fetch(`/api/games/${roomCode}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            actionType: "role_reveal",
+            playerId: "system", // Action système
+            targetId: playerId,
+            actionData: { role },
+          }),
         });
+
+        if (!response.ok) {
+          console.error("Failed to save role reveal to database");
+        }
+      } catch (error) {
+        console.error("Error saving role reveal to database:", error);
       }
+
+      return sendMessage("roleRevealed", { roomCode, playerId, role });
     },
-    []
+    [sendMessage]
   );
+
+  const getConnectedPlayers = useCallback(() => {
+    return connectedPlayers;
+  }, [connectedPlayers]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -209,6 +432,8 @@ export const useSupabaseRealtime = (): UseSupabaseRealtimeReturn => {
 
   return {
     isConnected,
+    isConnecting,
+    error,
     joinGame,
     leaveGame,
     updateGameState,
@@ -218,5 +443,6 @@ export const useSupabaseRealtime = (): UseSupabaseRealtimeReturn => {
     sendPhaseChange,
     eliminatePlayer,
     revealRole,
+    getConnectedPlayers,
   };
 };
