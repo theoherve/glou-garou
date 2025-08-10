@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Settings, Play, Eye, Plus, Minus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Play, Eye, Plus, Minus, AlertTriangle, Database, TestTube } from 'lucide-react';
 import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAllRoles, getDefaultRoleCounts, getTotalRoleCount, validateRoleCounts, RoleData } from '@/data/roles';
 import { Role } from '@/types/game';
 import ScaryAnimations from '@/components/ScaryAnimations';
 import ScaryHoverEffects from '@/components/ScaryHoverEffects';
+import RealtimeTest from '@/components/RealtimeTest';
 
 // Illustrations pour chaque rôle
 const roleIllustrations: Record<Role, string> = {
@@ -24,12 +25,13 @@ const roleIllustrations: Record<Role, string> = {
 };
 
 export default function CreateGamePage() {
-  const { createGame, isLoading } = useGameStore();
+  const { createGame, isLoading, error } = useGameStore();
   const [playerName, setPlayerName] = useState('');
   const [playerCount, setPlayerCount] = useState(8);
   const [roleCounts, setRoleCounts] = useState<Record<Role, number>>(getDefaultRoleCounts(8));
   const [roomCode, setRoomCode] = useState('');
   const [showScaryAnimations, setShowScaryAnimations] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const allRoles = getAllRoles();
 
@@ -81,35 +83,49 @@ export default function CreateGamePage() {
 
     const validation = validateRoleCounts(roleCounts, playerCount);
     if (!validation.isValid) {
-      alert(`Erreurs de validation:\n${validation.errors.join('\n')}`);
+      setLocalError(`Erreurs de validation:\n${validation.errors.join('\n')}`);
       return;
     }
 
-    const gameMasterId = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-    
-    // Convertir roleCounts en tableau de rôles
-    const roles: Role[] = [];
-    Object.entries(roleCounts).forEach(([role, count]) => {
-      for (let i = 0; i < count; i++) {
-        roles.push(role as Role);
-      }
-    });
+    try {
+      setLocalError(null); // Effacer les erreurs précédentes
+      
+      const gameMasterId = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      
+      // Convertir roleCounts en tableau de rôles
+      const roles: Role[] = [];
+      Object.entries(roleCounts).forEach(([role, count]) => {
+        for (let i = 0; i < count; i++) {
+          roles.push(role as Role);
+        }
+      });
 
-    const settings = {
-      roles,
-      minPlayers: playerCount,
-      maxPlayers: playerCount,
-      roleCounts,
-      enableLovers: roleCounts.cupidon > 0,
-      enableVoyante: roleCounts.voyante > 0,
-      enableChasseur: roleCounts.chasseur > 0,
-      enableSorciere: roleCounts.sorciere > 0,
-      enablePetiteFille: roleCounts["petite-fille"] > 0,
-      enableCapitaine: roleCounts.capitaine > 0,
-      enableVoleur: roleCounts.voleur > 0,
-    };
+      const settings = {
+        roles,
+        minPlayers: playerCount,
+        maxPlayers: playerCount,
+        roleCounts,
+        enableLovers: roleCounts.cupidon > 0,
+        enableVoyante: roleCounts.voyante > 0,
+        enableChasseur: roleCounts.chasseur > 0,
+        enableSorciere: roleCounts.sorciere > 0,
+        enablePetiteFille: roleCounts["petite-fille"] > 0,
+        enableCapitaine: roleCounts.capitaine > 0,
+        enableVoleur: roleCounts.voleur > 0,
+      };
 
-    await createGame(roomCode, gameMasterId, settings);
+      console.log('Création du jeu avec:', { roomCode, gameMasterId, settings });
+      
+      await createGame(roomCode, gameMasterId, settings);
+      
+      // Rediriger vers la page du jeu après création réussie
+      window.location.href = `/game/${roomCode}`;
+      
+    } catch (error) {
+      console.error('Erreur lors de la création du jeu:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      setLocalError(`Erreur lors de la création du jeu: ${errorMessage}`);
+    }
   };
 
   const generateRoomCode = () => {
@@ -447,6 +463,32 @@ export default function CreateGamePage() {
                 )}
               </motion.button>
             </ScaryHoverEffects>
+
+            {/* Error display */}
+            {(error || localError) && (
+              <motion.div 
+                className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                  </motion.div>
+                  <h4 className="text-red-400 font-semibold">Erreur</h4>
+                </div>
+                <div className="text-sm text-red-300 whitespace-pre-line">
+                  {localError || error}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Test section */}
+            <RealtimeTest />
 
             {/* Tips */}
             <ScaryHoverEffects intensity="low">
