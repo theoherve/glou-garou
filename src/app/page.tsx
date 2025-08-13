@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Moon, Crown, Users, Zap, Eye, Skull } from 'lucide-react';
 import Link from 'next/link';
 import ScaryAnimations from '@/components/ScaryAnimations';
+import { JoinGameTest } from '@/components/JoinGameTest';
 
 export default function HomePage() {
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
@@ -206,6 +207,16 @@ export default function HomePage() {
                 </motion.button>
               </Link>
             </div>
+          </motion.div>
+
+          {/* Composant de test pour rejoindre une partie */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="mb-6"
+          >
+            <JoinGameTest />
           </motion.div>
 
           {/* Footer avec icônes effrayantes */}

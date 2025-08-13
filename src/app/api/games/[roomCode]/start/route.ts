@@ -19,7 +19,7 @@ export async function POST(
     // Vérifier que le jeu existe et que l'utilisateur est le maître de jeu
     const { data: game, error: gameError } = await supabase
       .from("games")
-      .select("id, game_master_id, status")
+      .select("id, game_master_id, phase")
       .eq("room_code", roomCode)
       .single();
 
@@ -34,17 +34,17 @@ export async function POST(
       );
     }
 
-    if (game.status !== "waiting") {
+    if (game.phase !== "waiting") {
       return NextResponse.json(
         { error: "Game is already in progress or finished" },
         { status: 400 }
       );
     }
 
-    // Vérifier qu'il y a assez de joueurs
+    // Vérifier qu'il y a assez de joueurs et récupérer l'ID du maître de jeu
     const { data: players, error: playersError } = await supabase
       .from("players")
-      .select("id")
+      .select("id, is_game_master")
       .eq("game_id", game.id);
 
     if (playersError) {
@@ -62,13 +62,20 @@ export async function POST(
       );
     }
 
+    // Trouver l'ID du maître de jeu dans la table players
+    const gameMasterPlayer = players.find((p) => p.is_game_master);
+    if (!gameMasterPlayer) {
+      return NextResponse.json(
+        { error: "Game master player not found" },
+        { status: 404 }
+      );
+    }
+
     // Démarrer le jeu
     const { data: updatedGame, error: updateError } = await supabase
       .from("games")
       .update({
-        status: "in_progress",
         phase: "preparation",
-        started_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq("id", game.id)
@@ -84,13 +91,25 @@ export async function POST(
     }
 
     // Créer une action de type "game_start"
-    await supabase.from("game_actions").insert({
-      game_id: game.id,
-      player_id: gameMasterId,
-      action_type: "game_start",
-      target_id: null,
-      action_data: { phase: "preparation" },
-    });
+    const { data: actionData, error: actionError } = await supabase
+      .from("game_actions")
+      .insert({
+        game_id: game.id,
+        player_id: gameMasterPlayer.id,
+        action_type: "game_start",
+        target_id: null,
+        action_data: { phase: "preparation" },
+      });
+
+    if (actionError) {
+      console.error("Error creating game start action:", actionError);
+      return NextResponse.json(
+        { error: "Failed to create game start action" },
+        { status: 500 }
+      );
+    }
+
+    console.log("Game start action created:", actionData);
 
     return NextResponse.json({
       success: true,

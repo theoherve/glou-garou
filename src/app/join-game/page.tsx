@@ -7,10 +7,13 @@ import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 
 export default function JoinGamePage() {
-  const { joinGame, isLoading } = useGameStore();
+  const { joinGame, isLoading, error, setError } = useGameStore();
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [codeValidationStatus, setCodeValidationStatus] = useState<'idle' | 'validating' | 'valid' | 'invalid'>('idle');
 
   // Récupérer les paramètres depuis l'URL
   useEffect(() => {
@@ -29,8 +32,36 @@ export default function JoinGamePage() {
   }, []);
 
   const handleJoinGame = async () => {
-    if (!playerName.trim() || !roomCode.trim()) return;
-    await joinGame(roomCode.toUpperCase(), playerName);
+    // Validation locale
+    setLocalError(null);
+    setError(null);
+    
+    if (!playerName.trim()) {
+      setLocalError("Veuillez entrer votre nom");
+      return;
+    }
+    
+    if (!roomCode.trim()) {
+      setLocalError("Veuillez entrer le code de salle");
+      return;
+    }
+    
+    if (playerName.trim().length < 2) {
+      setLocalError("Le nom doit contenir au moins 2 caractères");
+      return;
+    }
+    
+    if (roomCode.trim().length < 3) {
+      setLocalError("Le code de salle doit contenir au moins 3 caractères");
+      return;
+    }
+    
+    try {
+      await joinGame(roomCode.toUpperCase(), playerName.trim());
+    } catch (error) {
+      // L'erreur est déjà gérée dans le store, on l'affiche juste
+      console.error("Erreur lors de la connexion:", error);
+    }
   };
 
   const handleCopyRoomCode = () => {
@@ -40,6 +71,48 @@ export default function JoinGamePage() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  // Validation du code de salle en temps réel
+  const validateRoomCode = async (code: string) => {
+    if (code.length < 3) {
+      setCodeValidationStatus('idle');
+      return;
+    }
+
+    setIsValidatingCode(true);
+    setCodeValidationStatus('validating');
+
+    try {
+      // Appel à l'API pour vérifier si le code existe
+      const response = await fetch(`/api/games?roomCode=${code.toUpperCase()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.game) {
+          setCodeValidationStatus('valid');
+          setLocalError(null);
+        } else {
+          setCodeValidationStatus('invalid');
+        }
+      } else {
+        setCodeValidationStatus('invalid');
+      }
+    } catch (error) {
+      setCodeValidationStatus('invalid');
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  // Validation en temps réel du code de salle
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (roomCode.trim().length >= 3) {
+        validateRoomCode(roomCode);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [roomCode]);
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] relative overflow-hidden">
@@ -103,14 +176,38 @@ export default function JoinGamePage() {
               <div>
                 <label className="block text-[#e0e0e0] mb-2 font-medium">Code de la salle</label>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={roomCode}
-                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                    className="flex-1 px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none focus:border-[#ff3333] transition-colors font-mono text-center text-lg"
-                    placeholder="XXXXXX"
-                    maxLength={6}
-                  />
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                      className={`w-full px-4 py-3 bg-[#1a1a1a] border rounded-lg text-[#e0e0e0] placeholder-[#999999] focus:outline-none transition-colors font-mono text-center text-lg ${
+                        codeValidationStatus === 'valid' 
+                          ? 'border-green-500 focus:border-green-500' 
+                          : codeValidationStatus === 'invalid' 
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-[#333333] focus:border-[#ff3333]'
+                      }`}
+                      placeholder="XXXXXX"
+                      maxLength={6}
+                    />
+                    {/* Status indicator */}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {codeValidationStatus === 'validating' && (
+                        <div className="w-5 h-5 border-2 border-[#ff9933]/30 border-t-[#ff9933] rounded-full animate-spin"></div>
+                      )}
+                      {codeValidationStatus === 'valid' && (
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                      {codeValidationStatus === 'invalid' && roomCode.length >= 3 && (
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">✕</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <motion.button
                     onClick={handleCopyRoomCode}
                     className="px-4 py-3 bg-[#333a45] hover:bg-[#2a3038] text-white rounded-lg transition-colors"
@@ -121,12 +218,51 @@ export default function JoinGamePage() {
                     {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                   </motion.button>
                 </div>
+                {/* Validation message */}
+                {codeValidationStatus === 'valid' && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-green-400 text-sm mt-2 flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    Code de salle valide
+                  </motion.p>
+                )}
+                {codeValidationStatus === 'invalid' && roomCode.length >= 3 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-400 text-sm mt-2 flex items-center gap-2"
+                  >
+                    <span className="w-4 h-4 bg-red-400 rounded-full flex items-center justify-center text-white text-xs">✕</span>
+                    Code de salle invalide
+                  </motion.p>
+                )}
               </div>
+
+              {/* Error Display */}
+              {(localError || error) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#ff3333]/10 border border-[#ff3333]/30 rounded-lg p-4"
+                >
+                  <div className="flex items-center gap-2 text-[#ff3333]">
+                    <div className="w-5 h-5 bg-[#ff3333] rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">!</span>
+                    </div>
+                    <span className="font-medium">
+                      {localError || error}
+                    </span>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Join button */}
               <motion.button
                 onClick={handleJoinGame}
-                disabled={!playerName.trim() || !roomCode.trim() || isLoading}
+                disabled={!playerName.trim() || !roomCode.trim() || isLoading || codeValidationStatus !== 'valid'}
                 className="w-full bg-[#333a45] hover:bg-[#2a3038] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

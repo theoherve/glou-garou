@@ -18,18 +18,34 @@ import { useGameStore } from '@/store/gameStore';
 import { getRoleData } from '@/data/roles';
 import { GamePhase } from '@/types/game';
 import { GameMasterPanel } from '@/components/GameMasterPanel';
+import { GameInstructions } from '@/components/GameInstructions';
+import { PhaseManager } from '@/components/PhaseManager';
+import { Phase5Test } from '@/components/Phase5Test';
+import { AutoStartManager } from '@/components/AutoStartManager';
+import { GameStartNotification } from '@/components/GameStartNotification';
+import { RoleRevelation } from '@/components/RoleRevelation';
+import { TeamDisplay } from '@/components/TeamDisplay';
 import NightAnimation from '@/components/NightAnimation';
 import { GameSocketHandler } from '@/components/GameSocketHandler';
 import { RealtimeProvider } from '@/components/RealtimeProvider';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
 import { ConnectedPlayers } from '@/components/ConnectedPlayers';
 import { GameActions } from '@/components/GameActions';
+import { NightPhase } from '@/components/NightPhase';
+import { DayPhase } from '@/components/DayPhase';
+import { VotingPhase } from '@/components/VotingPhase';
+import { UXUIEnhancements } from '@/components/UXUIEnhancements';
+import { Phase9TestSuite } from '@/components/Phase9TestSuite';
 
 import { DatabaseSync } from '@/components/DatabaseSync';
 import { DatabaseSyncTest } from '@/components/DatabaseSyncTest';
 import { GameHistory } from '@/components/GameHistory';
 import { ApiTest } from '@/components/ApiTest';
 import { DebugPanel } from '@/components/DebugPanel';
+import { PlayerDataDebug } from '@/components/PlayerDataDebug';
+import { ConnectionManager } from '@/components/ConnectionManager';
+import { PlayerConnectionStatus } from '@/components/PlayerConnectionStatus';
+import { StateBackupManager } from '@/components/StateBackupManager';
 import { Game, Player, Role, PlayerStatus } from '@/types/game';
 
 interface GamePageProps {
@@ -44,6 +60,18 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
   const [isMuted, setIsMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showNightAnimation, setShowNightAnimation] = useState(false);
+  const [showGameStartNotification, setShowGameStartNotification] = useState(false);
+  const [showRoleRevelation, setShowRoleRevelation] = useState(false);
+  const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
+  const [showGameInstructions, setShowGameInstructions] = useState(false);
+  const [showPhaseManager, setShowPhaseManager] = useState(false);
+  
+  // États pour les phases de jeu
+  const [showNightPhase, setShowNightPhase] = useState(false);
+  const [showDayPhase, setShowDayPhase] = useState(false);
+  const [showVotingPhase, setShowVotingPhase] = useState(false);
+  const [accusations, setAccusations] = useState<Record<string, string[]>>({});
+  const [eliminatedPlayerId, setEliminatedPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -142,6 +170,46 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Gestionnaires pour les transitions de phase
+  const handleNightPhaseComplete = () => {
+    setShowNightPhase(false);
+    setShowDayPhase(true);
+  };
+
+  const handleDayPhaseComplete = (newAccusations: Record<string, string[]>) => {
+    setAccusations(newAccusations);
+    setShowDayPhase(false);
+    setShowVotingPhase(true);
+  };
+
+  const handleVotingPhaseComplete = (eliminatedId: string | null) => {
+    setEliminatedPlayerId(eliminatedId);
+    setShowVotingPhase(false);
+    
+    // Si un joueur a été éliminé, mettre à jour son statut
+    if (eliminatedId && currentGame) {
+      const updatedPlayers = currentGame.players.map(player => 
+        player.id === eliminatedId 
+          ? { ...player, status: 'eliminated' as PlayerStatus }
+          : player
+      );
+      
+      // Mettre à jour le jeu dans le store
+      setCurrentGame({
+        ...currentGame,
+        players: updatedPlayers
+      });
+    }
+    
+    // Réinitialiser les accusations pour le prochain tour
+    setAccusations({});
+  };
+
+  // Gestionnaire pour démarrer la phase de nuit (appelé depuis le bouton de début de jeu)
+  const handleStartNightPhase = () => {
+    setShowNightPhase(true);
+  };
+
   const getPhaseIcon = (phase: GamePhase) => {
     switch (phase) {
       case 'night':
@@ -182,8 +250,15 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
     }
   }, [currentGame?.phase]);
 
-  const alivePlayers = currentGame?.players.filter(p => p.status === 'alive') || [];
-  const deadPlayers = currentGame?.players.filter(p => p.status !== 'alive') || [];
+  // Show game start notification when phase changes to preparation
+  useEffect(() => {
+    if (currentGame?.phase === 'preparation') {
+      setShowGameStartNotification(true);
+    }
+  }, [currentGame?.phase]);
+
+  const alivePlayers = currentGame?.players.filter(p => p && p.id && p.name && p.status === 'alive') || [];
+  const deadPlayers = currentGame?.players.filter(p => p && p.id && p.name && p.status !== 'alive') || [];
   const isGameMaster = currentPlayer?.isGameMaster || false;
 
   // Show loading while roomCode is being resolved
@@ -247,9 +322,15 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white">
-      {/* Header */}
-      <header className="bg-[#2a2a2a] border-b border-[#ff3333]/20 p-4">
+    <UXUIEnhancements
+      enableAnimations={true}
+      enableParticles={true}
+      enableResponsive={true}
+      enableNotifications={true}
+    >
+      <div className="min-h-screen bg-[#1a1a1a] text-white">
+        {/* Header */}
+        <header className="bg-[#2a2a2a] border-b border-[#ff3333]/20 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-[#ff3333]">Glou-Garou</h1>
@@ -300,9 +381,109 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
             {/* Connected Players */}
             <ConnectedPlayers />
 
+            {/* Player Connection Status - Phase 7 */}
+            <PlayerConnectionStatus showDetails={true} />
+
+            {/* State Backup Manager - Phase 7 */}
+            <StateBackupManager roomCode={roomCode} />
+
+            {/* Auto Start Manager - Phase 3 */}
+            <AutoStartManager roomCode={roomCode} />
+
+            {/* Phase 5 Test - Interface du Maître de Jeu */}
+            {isGameMaster && <Phase5Test />}
+
+            {/* Révélation des Rôles - Phase 4 */}
+            {currentGame.phase === 'preparation' && (
+              <div className="space-y-6">
+                {/* Bouton pour ouvrir la révélation des rôles */}
+                <div className="text-center">
+                  <button
+                    onClick={() => setShowRoleRevelation(true)}
+                    className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-3 mx-auto"
+                  >
+                    <span className="text-2xl">🎭</span>
+                    <span>Révéler les Rôles</span>
+                  </button>
+                </div>
+
+                {/* Affichage des équipes */}
+                <TeamDisplay players={currentGame.players} />
+              </div>
+            )}
+
+            {/* Phases de jeu - Phase 6 */}
+            {/* Phase de Nuit */}
+            {showNightPhase && (
+              <NightPhase
+                isActive={showNightPhase}
+                onPhaseComplete={handleNightPhaseComplete}
+              />
+            )}
+
+            {/* Phase de Jour */}
+            {showDayPhase && (
+              <DayPhase
+                isActive={showDayPhase}
+                onPhaseComplete={handleDayPhaseComplete}
+                currentPlayer={currentPlayer}
+                alivePlayers={alivePlayers}
+                deadPlayers={deadPlayers}
+                eliminatedPlayerId={eliminatedPlayerId}
+              />
+            )}
+
+            {/* Phase de Vote */}
+            {showVotingPhase && (
+              <VotingPhase
+                isActive={showVotingPhase}
+                onPhaseComplete={handleVotingPhaseComplete}
+                accusations={accusations}
+              />
+            )}
+
+            {/* Bouton pour commencer la phase de nuit (visible seulement en phase preparation) */}
+            {currentGame.phase === 'preparation' && isGameMaster && (
+              <div className="text-center">
+                <button
+                  onClick={handleStartNightPhase}
+                  className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-3 mx-auto"
+                >
+                  <span className="text-2xl">🌙</span>
+                  <span>Commencer la Phase de Nuit</span>
+                </button>
+              </div>
+            )}
+
             {/* Game Master Panel */}
             {isGameMaster && (
-              <GameMasterPanel currentGame={currentGame} currentPlayer={currentPlayer} />
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <button
+                    onClick={() => setShowGameMasterPanel(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <Crown className="w-5 h-5" />
+                    <span>Panneau du Maître de Jeu</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowGameInstructions(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <span className="text-xl">📚</span>
+                    <span>Instructions</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowPhaseManager(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <span className="text-xl">⏱️</span>
+                    <span>Gestionnaire de Phases</span>
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Game Actions */}
@@ -320,8 +501,39 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
             {/* API Test (temporaire pour le développement) */}
             <ApiTest roomCode={roomCode} />
             
+            {/* Phase 9 - Suite de Tests Complète */}
+            <Phase9TestSuite roomCode={roomCode} />
+            
             {/* Panel de débogage (temporaire pour le développement) */}
             <DebugPanel roomCode={roomCode} />
+            
+            {/* Debug des données des joueurs */}
+            <PlayerDataDebug />
+
+            {/* Démonstration des améliorations UX/UI */}
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+              <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center">
+                <span className="text-2xl mr-2">🎨</span>
+                Améliorations UX/UI
+              </h2>
+              <p className="text-[#cccccc] mb-4">
+                Découvrez les nouvelles animations et améliorations de l'interface
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#ff3333]/20">
+                  <h3 className="text-lg font-medium text-[#e0e0e0] mb-2">✨ Animations</h3>
+                  <p className="text-sm text-[#cccccc]">
+                    Transitions fluides, micro-interactions et effets visuels
+                  </p>
+                </div>
+                <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#ff3333]/20">
+                  <h3 className="text-lg font-medium text-[#e0e0e0] mb-2">📱 Responsive</h3>
+                  <p className="text-sm text-[#cccccc]">
+                    Interface optimisée pour mobile et tablette
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Players Grid */}
             <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
@@ -331,53 +543,55 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
               </h2>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {currentGame.players.map((player) => {
-                  const isDead = player.status !== 'alive';
-                  const isCurrentPlayer = player.id === currentPlayer.id;
-                  
-                  return (
-                    <motion.div
-                      key={player.id}
-                      className={`relative p-4 rounded-lg border transition-all ${
-                        isDead
-                          ? 'bg-[#ff3333]/10 border-[#ff3333]/30 text-[#ff3333]'
-                          : 'bg-[#1a1a1a] border-[#ff3333]/20 text-[#e0e0e0] hover:border-[#ff3333]/40'
-                      } ${isCurrentPlayer ? 'ring-2 ring-[#ff3333]' : ''}`}
-                      whileHover={!isDead ? { scale: 1.02 } : {}}
-                      whileTap={!isDead ? { scale: 0.98 } : {}}
-                    >
-                      {/* Player Status Indicator */}
-                      <div className="absolute top-2 right-2">
-                        {isDead ? (
-                          <div className="w-3 h-3 bg-[#ff3333] rounded-full"></div>
-                        ) : (
-                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                {currentGame.players
+                  .filter(player => player && player.id && player.name) // Filtrer les objets undefined ou malformés
+                  .map((player) => {
+                    const isDead = player.status !== 'alive';
+                    const isCurrentPlayer = player.id === currentPlayer.id;
+                    
+                    return (
+                      <motion.div
+                        key={player.id}
+                        className={`relative p-4 rounded-lg border transition-all ${
+                          isDead
+                            ? 'bg-[#ff3333]/10 border-[#ff3333]/30 text-[#ff3333]'
+                            : 'bg-[#1a1a1a] border-[#ff3333]/20 text-[#e0e0e0] hover:border-[#ff3333]/40'
+                        } ${isCurrentPlayer ? 'ring-2 ring-[#ff3333]' : ''}`}
+                        whileHover={!isDead ? { scale: 1.02 } : {}}
+                        whileTap={!isDead ? { scale: 0.98 } : {}}
+                      >
+                        {/* Player Status Indicator */}
+                        <div className="absolute top-2 right-2">
+                          {isDead ? (
+                            <div className="w-3 h-3 bg-[#ff3333] rounded-full"></div>
+                          ) : (
+                            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                          )}
+                        </div>
+
+                        {/* Player Info */}
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">
+                            {player.role === 'loup-garou' ? '🐺' : '🏠'}
+                          </div>
+                          <div className="font-semibold mb-1 truncate">
+                            {player.name}
+                            {isCurrentPlayer && <span className="text-[#ff3333] ml-1">(Vous)</span>}
+                          </div>
+                          <div className="text-xs text-[#cccccc]">
+                            {isDead ? 'Éliminé' : getRoleData(player.role).name}
+                          </div>
+                        </div>
+
+                        {/* Game Master Badge */}
+                        {player.isGameMaster && (
+                          <div className="absolute top-2 left-2">
+                            <Crown className="w-4 h-4 text-[#ff9933]" />
+                          </div>
                         )}
-                      </div>
-
-                      {/* Player Info */}
-                      <div className="text-center">
-                        <div className="text-2xl mb-2">
-                          {player.role === 'loup-garou' ? '🐺' : '🏠'}
-                        </div>
-                        <div className="font-semibold mb-1 truncate">
-                          {player.name}
-                          {isCurrentPlayer && <span className="text-[#ff3333] ml-1">(Vous)</span>}
-                        </div>
-                        <div className="text-xs text-[#cccccc]">
-                          {isDead ? 'Éliminé' : getRoleData(player.role).name}
-                        </div>
-                      </div>
-
-                      {/* Game Master Badge */}
-                      {player.isGameMaster && (
-                        <div className="absolute top-2 left-2">
-                          <Crown className="w-4 h-4 text-[#ff9933]" />
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
+                      </motion.div>
+                    );
+                  })}
               </div>
             </div>
           </div>
@@ -431,7 +645,7 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
                 </p>
                 <div className="space-y-2">
                   {alivePlayers
-                    .filter(p => p.id !== currentPlayer.id)
+                    .filter(p => p && p.id && p.name && p.id !== currentPlayer.id) // Vérification de sécurité
                     .map(player => (
                       <button
                         key={player.id}
@@ -447,12 +661,43 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
         </div>
       </main>
 
+      {/* Révélation des Rôles */}
+      <RoleRevelation
+        isVisible={showRoleRevelation}
+        onClose={() => setShowRoleRevelation(false)}
+      />
+
       {/* Night Animation */}
       <NightAnimation 
         isActive={showNightAnimation} 
         onComplete={() => setShowNightAnimation(false)}
       />
+
+      {/* Game Start Notification */}
+      <GameStartNotification
+        isVisible={showGameStartNotification}
+        onClose={() => setShowGameStartNotification(false)}
+      />
+
+      {/* Game Master Panel Modal */}
+      <GameMasterPanel
+        isVisible={showGameMasterPanel}
+        onClose={() => setShowGameMasterPanel(false)}
+      />
+
+      {/* Game Instructions Modal */}
+      <GameInstructions
+        isVisible={showGameInstructions}
+        onClose={() => setShowGameInstructions(false)}
+      />
+
+      {/* Phase Manager Modal */}
+      <PhaseManager
+        isVisible={showPhaseManager}
+        onClose={() => setShowPhaseManager(false)}
+      />
     </div>
+      </UXUIEnhancements>
   );
 }
 
@@ -487,6 +732,7 @@ function GamePageWrapper({ params }: GamePageProps) {
   return (
     <RealtimeProvider roomCode={roomCode}>
       <DatabaseSync roomCode={roomCode} />
+      <ConnectionManager roomCode={roomCode} />
       <GamePageClient params={params} />
       {/* Temporairement désactivé - remplacé par Supabase Realtime
       <GameSocketWrapper params={params} /> 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { gameService } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   request: NextRequest,
@@ -14,9 +14,13 @@ export async function GET(
       );
     }
 
-    const game = await gameService.getGameByRoomCode(roomCode);
+    const { data: game, error } = await supabase
+      .from("games")
+      .select("*")
+      .eq("room_code", roomCode)
+      .single();
 
-    if (!game) {
+    if (error || !game) {
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
