@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSupabaseSubscription } from '@/hooks/useSupabaseSubscription';
 import { useGameStore } from '@/store/gameStore';
 import { useRealtime } from './RealtimeProvider';
@@ -10,8 +10,69 @@ interface DatabaseSyncProps {
 }
 
 export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
-  const { currentGame, setCurrentGame, currentPlayer, setCurrentPlayer } = useGameStore();
+  const { 
+    currentGame, 
+    setCurrentGame, 
+    currentPlayer, 
+    setCurrentPlayer,
+    syncGameState,
+    syncPlayerState,
+    updateGamePhase,
+    updatePlayerStatus,
+    getGameStateSnapshot,
+    restoreGameState
+  } = useGameStore();
   const { isConnected } = useRealtime();
+  
+  // Référence pour stocker le dernier snapshot
+  const lastSnapshotRef = useRef<any>(null);
+  
+  // Timer pour la sauvegarde périodique
+  const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Fonction de sauvegarde périodique de l'état
+  const startPeriodicSave = () => {
+    if (saveIntervalRef.current) {
+      clearInterval(saveIntervalRef.current);
+    }
+    
+    saveIntervalRef.current = setInterval(() => {
+      if (currentGame) {
+        const snapshot = getGameStateSnapshot();
+        if (snapshot) {
+          lastSnapshotRef.current = snapshot;
+          // Sauvegarder dans localStorage comme backup
+          try {
+            localStorage.setItem(`game-snapshot-${roomCode}`, JSON.stringify(snapshot));
+            console.log('💾 État de jeu sauvegardé périodiquement');
+          } catch (error) {
+            console.warn('Impossible de sauvegarder dans localStorage:', error);
+          }
+        }
+      }
+    }, 30000); // Sauvegarder toutes les 30 secondes
+  };
+
+  // Fonction de restauration depuis le backup
+  const restoreFromBackup = () => {
+    try {
+      const backupData = localStorage.getItem(`game-snapshot-${roomCode}`);
+      if (backupData) {
+        const snapshot = JSON.parse(backupData);
+        const backupAge = Date.now() - new Date(snapshot.updatedAt).getTime();
+        
+        // Restaurer seulement si le backup n'est pas trop ancien (moins de 5 minutes)
+        if (backupAge < 5 * 60 * 1000) {
+          restoreGameState(snapshot);
+          console.log('💾 État de jeu restauré depuis le backup local');
+          return true;
+        }
+      }
+    } catch (error) {
+      console.warn('Erreur lors de la restauration depuis le backup:', error);
+    }
+    return false;
+  };
 
   // Écouter les changements de la table games
   const { isSubscribed: isGamesSubscribed, error: gamesError, subscribe: subscribeGames, unsubscribe: unsubscribeGames } = useSupabaseSubscription({
@@ -20,11 +81,16 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     onData: (payload) => {
       console.log('Game update received:', payload);
       if ((payload.eventType === 'UPDATE' || payload.type === 'UPDATE') && payload.new) {
-        setCurrentGame(payload.new);
+        // Utiliser la nouvelle fonction de synchronisation
+        syncGameState(payload.new);
       }
     },
     onError: (error) => {
       console.error('Games subscription error:', error);
+      // En cas d'erreur, essayer de restaurer depuis le backup
+      if (!restoreFromBackup()) {
+        console.error('Impossible de restaurer l\'état depuis le backup');
+      }
     },
   });
 
@@ -35,35 +101,27 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     onData: (payload) => {
       console.log('Player update received:', payload);
       if ((payload.eventType === 'UPDATE' || payload.type === 'UPDATE') && payload.new) {
-        // Mettre à jour le joueur actuel si c'est lui qui a changé
-        if (currentPlayer && payload.new.id === currentPlayer.id) {
-          setCurrentPlayer(payload.new);
-        }
-        
-        // Mettre à jour la liste des joueurs dans le jeu
-        if (currentGame) {
-          setCurrentGame({
-            ...currentGame,
-            players: currentGame.players.map(p => 
-              p.id === payload.new.id ? payload.new : p
-            ),
-          });
-        }
+        // Utiliser la nouvelle fonction de synchronisation
+        syncPlayerState(payload.new);
       } else if ((payload.eventType === 'INSERT' || payload.type === 'INSERT') && payload.new) {
         // Ajouter un nouveau joueur
         if (currentGame) {
-          setCurrentGame({
+          const updatedGame = {
             ...currentGame,
             players: [...currentGame.players, payload.new],
-          });
+            updatedAt: new Date(),
+          };
+          setCurrentGame(updatedGame);
         }
       } else if ((payload.eventType === 'DELETE' || payload.type === 'DELETE') && payload.old) {
         // Supprimer un joueur
         if (currentGame) {
-          setCurrentGame({
+          const updatedGame = {
             ...currentGame,
             players: currentGame.players.filter(p => p.id !== payload.old.id),
-          });
+            updatedAt: new Date(),
+          };
+          setCurrentGame(updatedGame);
         }
       }
     },
@@ -79,80 +137,44 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     onData: (payload) => {
       console.log('Game action received:', payload);
       if ((payload.eventType === 'INSERT' || payload.type === 'INSERT') && payload.new) {
-        // Traiter les nouvelles actions de jeu
+        // Traiter les nouvelles actions de jeu avec les nouvelles fonctions
         const action = payload.new;
         
         switch (action.action_type) {
           case 'game_start':
             // Démarrer le jeu
             if (currentGame && action.action_data?.phase) {
-              setCurrentGame({
-                ...currentGame,
-                phase: action.action_data.phase,
-                updatedAt: new Date(),
-              });
+              updateGamePhase(action.action_data.phase as any);
             }
             break;
           case 'vote':
             // Mettre à jour le vote du joueur
             if (currentGame) {
-              setCurrentGame({
-                ...currentGame,
-                players: currentGame.players.map(p => 
-                  p.id === action.player_id 
-                    ? { ...p, voteTarget: action.target_id }
-                    : p
-                ),
-              });
+              updatePlayerStatus(action.player_id, 'alive', { voteTarget: action.target_id });
             }
             break;
           case 'ability_use':
             // Marquer l'utilisation d'une capacité
             if (currentGame) {
-              setCurrentGame({
-                ...currentGame,
-                players: currentGame.players.map(p => 
-                  p.id === action.player_id 
-                    ? { ...p, hasUsedAbility: true }
-                    : p
-                ),
-              });
+              updatePlayerStatus(action.player_id, 'alive', { hasUsedAbility: true });
             }
             break;
           case 'phase_change':
             // Changer la phase du jeu
             if (currentGame && action.action_data?.phase) {
-              setCurrentGame({
-                ...currentGame,
-                phase: action.action_data.phase,
-                currentNight: action.action_data.current_night || currentGame.currentNight,
-              });
+              updateGamePhase(action.action_data.phase as any, action.action_data);
             }
             break;
           case 'player_elimination':
             // Éliminer un joueur
             if (currentGame && action.target_id) {
-              setCurrentGame({
-                ...currentGame,
-                players: currentGame.players.map(p => 
-                  p.id === action.target_id 
-                    ? { ...p, status: 'eliminated' }
-                    : p
-                ),
-              });
+              updatePlayerStatus(action.target_id, 'eliminated');
             }
             break;
           case 'role_reveal':
             // Révéler le rôle d'un joueur
             if (currentGame && action.target_id) {
-              setCurrentGame({
-                ...currentGame,
-                players: currentGame.players.map(p => 
-                  p.id === action.target_id 
-                    ? { ...p, role: action.action_data?.role || p.role }
-                    : p
-                ),
-              });
+              updatePlayerStatus(action.target_id, 'alive', { role: action.action_data?.role });
             }
             break;
         }
@@ -162,6 +184,19 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
       console.error('Game actions subscription error:', error);
     },
   });
+
+  // Démarrer la sauvegarde périodique quand le jeu est chargé
+  useEffect(() => {
+    if (currentGame) {
+      startPeriodicSave();
+    }
+    
+    return () => {
+      if (saveIntervalRef.current) {
+        clearInterval(saveIntervalRef.current);
+      }
+    };
+  }, [currentGame, roomCode]);
 
   // S'abonner aux tables quand le composant est monté
   useEffect(() => {

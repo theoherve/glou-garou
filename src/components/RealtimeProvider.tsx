@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 import { useGameStore } from '@/store/gameStore';
 
@@ -9,6 +9,9 @@ interface RealtimeContextType {
   isConnecting: boolean;
   error: string | null;
   connectedPlayers: any[];
+  connectionQuality: 'excellent' | 'good' | 'poor' | 'disconnected';
+  reconnectAttempts: number;
+  maxReconnectAttempts: number;
   joinGame: (roomCode: string) => Promise<void>;
   leaveGame: (roomCode: string) => Promise<void>;
   sendPlayerAction: (action: any) => Promise<any>;
@@ -17,6 +20,12 @@ interface RealtimeContextType {
   sendNightAction: (playerId: string, action: any) => Promise<any>;
   eliminatePlayer: (playerId: string) => Promise<any>;
   revealRole: (playerId: string, role: string) => Promise<any>;
+  forceReconnect: () => Promise<void>;
+  getConnectionStats: () => {
+    latency: number;
+    packetLoss: number;
+    uptime: number;
+  };
 }
 
 const RealtimeContext = createContext<RealtimeContextType | undefined>(undefined);
@@ -30,7 +39,7 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
   children, 
   roomCode 
 }) => {
-  const { currentGame, currentPlayer, setCurrentGame, updatePlayer } = useGameStore();
+  const { currentGame, currentPlayer, setCurrentGame, updatePlayer, syncGameState, syncPlayerState } = useGameStore();
   const {
     isConnected,
     isConnecting,
@@ -47,6 +56,122 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
   } = useSupabaseRealtime(currentPlayer?.id);
 
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
+  const [connectionQuality, setConnectionQuality] = useState<'excellent' | 'good' | 'poor' | 'disconnected'>('excellent');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [maxReconnectAttempts] = useState(5);
+  
+  // Références pour la gestion des métriques de connexion
+  const connectionStartTime = useRef<Date>(new Date());
+  const lastPingTime = useRef<Date>(new Date());
+  const pingLatencies = useRef<number[]>([]);
+  const failedPings = useRef<number>(0);
+  const totalPings = useRef<number>(0);
+
+  // Fonction pour mesurer la latence
+  const measureLatency = async (): Promise<number> => {
+    const start = Date.now();
+    try {
+      // Envoyer un ping simple via l'API
+      const response = await fetch(`/api/games/${roomCode}/actions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          actionType: 'ping',
+          playerId: currentPlayer?.id || 'system',
+          targetId: null,
+          actionData: { timestamp: start },
+        }),
+      });
+      
+      if (response.ok) {
+        const latency = Date.now() - start;
+        pingLatencies.current.push(latency);
+        
+        // Garder seulement les 10 dernières mesures
+        if (pingLatencies.current.length > 10) {
+          pingLatencies.current.shift();
+        }
+        
+        totalPings.current++;
+        lastPingTime.current = new Date();
+        return latency;
+      } else {
+        failedPings.current++;
+        totalPings.current++;
+        throw new Error('Ping failed');
+      }
+    } catch (error) {
+      failedPings.current++;
+      totalPings.current++;
+      return -1;
+    }
+  };
+
+  // Fonction pour évaluer la qualité de la connexion
+  const evaluateConnectionQuality = (latency: number) => {
+    if (latency === -1) {
+      setConnectionQuality('disconnected');
+      return;
+    }
+    
+    if (latency < 50) {
+      setConnectionQuality('excellent');
+    } else if (latency < 150) {
+      setConnectionQuality('good');
+    } else {
+      setConnectionQuality('poor');
+    }
+  };
+
+  // Fonction pour forcer une reconnexion
+  const forceReconnect = async () => {
+    if (reconnectAttempts >= maxReconnectAttempts) {
+      console.error('Nombre maximum de tentatives de reconnexion atteint');
+      return;
+    }
+
+    setReconnectAttempts(prev => prev + 1);
+    console.log(`🔄 Reconnexion forcée ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
+
+    try {
+      // Se déconnecter d'abord
+      if (roomCode) {
+        await realtimeLeaveGame(roomCode);
+      }
+      
+      // Attendre un court délai
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Tenter de se reconnecter
+      if (roomCode) {
+        await realtimeJoinGame(roomCode);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la reconnexion forcée:', error);
+    }
+  };
+
+  // Fonction pour obtenir les statistiques de connexion
+  const getConnectionStats = () => {
+    const now = new Date();
+    const uptime = now.getTime() - connectionStartTime.current.getTime();
+    
+    const avgLatency = pingLatencies.current.length > 0 
+      ? pingLatencies.current.reduce((a, b) => a + b, 0) / pingLatencies.current.length 
+      : 0;
+    
+    const packetLoss = totalPings.current > 0 
+      ? (failedPings.current / totalPings.current) * 100 
+      : 0;
+    
+    return {
+      latency: Math.round(avgLatency),
+      packetLoss: Math.round(packetLoss * 100) / 100,
+      uptime: Math.round(uptime / 1000),
+    };
+  };
 
   // Rejoindre automatiquement le jeu quand le roomCode change
   useEffect(() => {
@@ -68,6 +193,29 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
     return () => clearInterval(interval);
   }, [getConnectedPlayers]);
 
+  // Mesurer la latence périodiquement
+  useEffect(() => {
+    if (isConnected && roomCode) {
+      const latencyInterval = setInterval(async () => {
+        const latency = await measureLatency();
+        evaluateConnectionQuality(latency);
+      }, 10000); // Mesurer toutes les 10 secondes
+
+      return () => clearInterval(latencyInterval);
+    }
+  }, [isConnected, roomCode]);
+
+  // Gérer les tentatives de reconnexion automatique
+  useEffect(() => {
+    if (!isConnected && !isConnecting && reconnectAttempts < maxReconnectAttempts) {
+      const reconnectTimer = setTimeout(() => {
+        forceReconnect();
+      }, 5000 * (reconnectAttempts + 1)); // Délai exponentiel
+
+      return () => clearTimeout(reconnectTimer);
+    }
+  }, [isConnected, isConnecting, reconnectAttempts, maxReconnectAttempts]);
+
   // Écouter les événements de mise à jour du jeu
   useEffect(() => {
     if (!isConnected) return;
@@ -75,7 +223,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
     const handleGameStateUpdated = (event: CustomEvent) => {
       const { gameState } = event.detail;
       if (gameState && currentGame?.id === gameState.id) {
-        setCurrentGame(gameState);
+        // Utiliser la nouvelle fonction de synchronisation
+        syncGameState(gameState);
       }
     };
 
@@ -95,6 +244,10 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
           break;
         case 'roleRevealed':
           updatePlayer(action.playerId, { role: action.role });
+          break;
+        case 'ping':
+          // Répondre au ping pour mesurer la latence
+          console.log('🏓 Ping reçu, latence mesurée');
           break;
         default:
           console.log('Unknown action type:', action.type);
@@ -143,7 +296,16 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
       window.removeEventListener('playerEliminated', handlePlayerEliminated as EventListener);
       window.removeEventListener('roleRevealed', handleRoleRevealed as EventListener);
     };
-  }, [isConnected, currentGame, setCurrentGame, updatePlayer]);
+  }, [isConnected, currentGame, setCurrentGame, updatePlayer, syncGameState]);
+
+  // Réinitialiser les tentatives de reconnexion quand la connexion est rétablie
+  useEffect(() => {
+    if (isConnected && reconnectAttempts > 0) {
+      setReconnectAttempts(0);
+      connectionStartTime.current = new Date();
+      console.log('✅ Connexion rétablie, compteurs réinitialisés');
+    }
+  }, [isConnected, reconnectAttempts]);
 
   // Fonctions wrapper qui incluent le roomCode automatiquement
   const joinGame = async (gameRoomCode: string) => {
@@ -189,6 +351,9 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
     isConnecting,
     error,
     connectedPlayers,
+    connectionQuality,
+    reconnectAttempts,
+    maxReconnectAttempts,
     joinGame,
     leaveGame,
     sendPlayerAction,
@@ -197,6 +362,8 @@ export const RealtimeProvider: React.FC<RealtimeProviderProps> = ({
     sendNightAction,
     eliminatePlayer,
     revealRole,
+    forceReconnect,
+    getConnectionStats,
   };
 
   return (
