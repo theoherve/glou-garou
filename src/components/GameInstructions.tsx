@@ -30,134 +30,122 @@ export const GameInstructions = ({ isVisible, onClose }: GameInstructionsProps) 
   const getPhaseInstructions = () => {
     const baseInstructions = {
       preparation: {
-        title: 'Phase de Préparation',
-        description: 'Les joueurs découvrent leurs rôles et se préparent pour la partie.',
+        title: 'Préparation du village',
+        description: 'Annonce d’ouverture et attribution des rôles (script “bleu/gris”).',
         steps: [
           {
-            title: 'Vérification des rôles',
-            description: 'Assurez-vous que tous les joueurs ont révélé leur rôle.',
-            action: 'Demander aux joueurs de cliquer sur leur carte pour révéler leur rôle.',
-            icon: <Eye className="w-5 h-5 text-purple-400" />
-          },
-          {
-            title: 'Explication des règles',
-            description: 'Rappelez les règles de base du jeu.',
-            action: 'Expliquer le déroulement des phases et les conditions de victoire.',
+            title: 'Bienvenue',
+            description: '“Bienvenu à tous pour cette première partie du Glou-Garou ! ... trouvez le nom du village.”',
+            action: 'Laisser le MJ introduire la partie (texte bleu).',
             icon: <Info className="w-5 h-5 text-blue-400" />
           },
           {
-            title: 'Préparation de la nuit',
-            description: 'Préparez-vous à commencer la première phase de nuit.',
-            action: 'Annoncer le début de la nuit et demander aux joueurs de fermer les yeux.',
+            title: 'Attribution des cartes',
+            description: '“J’invite tous les villageois à regarder son rôle.”',
+            action: 'Distribuer/révéler les rôles aux joueurs.',
+            icon: <Eye className="w-5 h-5 text-purple-400" />
+          },
+          {
+            title: 'Nuit tombe',
+            description: '“La nuit est déjà tombée... vous pouvez fermer les yeux !”',
+            action: 'Passer à la Phase de Nuit.',
             icon: <Moon className="w-5 h-5 text-indigo-400" />
           }
         ]
       },
       night: {
-        title: 'Phase de Nuit',
-        description: 'Les rôles spéciaux agissent dans l\'obscurité.',
+        title: 'Nuit — Ordre de la trame',
+        description: 'Déroulez les rôles dans l’ordre: Glou-Garous → Camel Bent → Cupid’Eau → Sucière → Véritable Villageoise.',
         steps: [
           {
-            title: 'Début de la nuit',
-            description: 'Tous les joueurs ferment les yeux.',
-            action: 'Annoncer "La nuit tombe sur le village. Tous les joueurs ferment les yeux."',
-            icon: <Moon className="w-5 h-5 text-indigo-400" />
-          },
-          {
-            title: 'Action des loups-garous',
-            description: 'Les loups-garous choisissent une victime.',
-            action: 'Demander aux loups-garous d\'ouvrir les yeux et de désigner une victime.',
+            title: 'Glou-Garous',
+            description: '“La meute désigne une victime (shot piégé).”',
+            action: 'Demander aux Glou-Garous de choisir une cible.',
             icon: <Moon className="w-5 h-5 text-red-400" />
           },
           {
-            title: 'Action de la voyante',
-            description: 'La voyante observe un joueur.',
-            action: 'Demander à la voyante d\'ouvrir les yeux et de choisir un joueur à observer.',
-            icon: <Eye className="w-5 h-5 text-purple-400" />
+            title: 'Camel Bent',
+            description: '“Dis-moi qui tu penses être la victime des Glou-Garous. Si c’est juste, résurrection la nuit prochaine.”',
+            action: 'Le MJ note la cible devinée (réssurection planifiée si bonne).',
+            icon: <Heart className="w-5 h-5 text-pink-400" />
           },
           {
-            title: 'Action de la sorcière',
-            description: 'La sorcière utilise ses potions.',
-            action: 'Demander à la sorcière d\'ouvrir les yeux et de décider d\'utiliser ses potions.',
-            icon: <Zap className="w-5 h-5 text-blue-400" />
+            title: 'Cupid’Eau',
+            description: '“Peut échanger le shot matinal d’un joueur par un cocktail (protège la victime si c’est elle).”',
+            action: 'Option: sélectionner une cible à protéger (shot “magical”).',
+            icon: <Heart className="w-5 h-5 text-blue-400" />
           },
           {
-            title: 'Fin de la nuit',
-            description: 'Tous les joueurs ferment les yeux.',
-            action: 'Annoncer "La nuit se termine. Tous les joueurs ferment les yeux."',
-            icon: <Moon className="w-5 h-5 text-indigo-400" />
+            title: 'La Sucière',
+            description: '“Sauver (boire à la place), Ne rien faire, ou Tuer (shot MAGIQUE).”',
+            action: 'Choisir “save | none | kill” et la cible si kill.',
+            icon: <Zap className="w-5 h-5 text-yellow-400" />
+          },
+          {
+            title: 'La Véritable Villageoise',
+            description: '“Échanger sa carte avec un joueur, ou échanger les cartes de 2 autres joueurs.”',
+            action: 'Appliquer l’échange de rôles voulu.',
+            icon: <Users className="w-5 h-5 text-green-400" />
           }
         ]
       },
       day: {
-        title: 'Phase de Jour',
-        description: 'Révélez les événements de la nuit et laissez les joueurs discuter.',
+        title: 'Jour — Shots, Détection, Discussion',
+        description: 'Révélez les shots, 15s pour démasquer la victime des loups, puis discussion et vote.',
         steps: [
           {
-            title: 'Révélation des événements',
-            description: 'Annoncez qui est mort pendant la nuit.',
-            action: 'Révéler les morts de la nuit et expliquer les circonstances.',
+            title: 'Révélation des shots',
+            description: '“Voici votre shot journalier.” (les types: eau, alcool, magical, empty, alcool-sucière)',
+            action: 'Distribuer les verres selon le plan des shots.',
             icon: <AlertTriangle className="w-5 h-5 text-red-400" />
           },
           {
-            title: 'Discussion générale',
-            description: 'Laissez les joueurs discuter et se défendre.',
-            action: 'Encourager la discussion et laisser les joueurs s\'exprimer.',
-            icon: <Users className="w-5 h-5 text-green-400" />
+            title: 'Détection 15s',
+            description: '“Vous avez 15 secondes pour trouver qui a été tué par les Glou-Garous.”',
+            action: 'Si trouvé: 30s one-man-shot et mort immédiate. Sinon: dernière gorgée (narratif), puis mort.',
+            icon: <Clock className="w-5 h-5 text-orange-400" />
           },
           {
-            title: 'Préparation du vote',
-            description: 'Préparez le vote d\'élimination.',
-            action: 'Annoncer le début du vote et expliquer les règles.',
-            icon: <Target className="w-5 h-5 text-orange-400" />
+            title: 'Discussion',
+            description: 'Débattez des événements et préparez le vote.',
+            action: 'Lancer la discussion libre, éventuellement VodYante (narratif) en journée.',
+            icon: <Users className="w-5 h-5 text-green-400" />
           }
         ]
       },
       vote: {
-        title: 'Phase de Vote',
-        description: 'Les joueurs votent pour éliminer un suspect.',
+        title: 'Vote du village',
+        description: 'Votez pour éliminer un suspect (Grand Cru-badour: 30s pour faire rire, peut remplacer sa mort).',
         steps: [
           {
             title: 'Ouverture du vote',
-            description: 'Ouvrez le vote pour tous les joueurs.',
-            action: 'Demander à chaque joueur de voter pour un suspect.',
+            description: 'Tous votent simultanément.',
+            action: 'Collecter les votes et annoncer la cible.',
             icon: <Target className="w-5 h-5 text-orange-400" />
           },
           {
-            title: 'Comptage des votes',
-            description: 'Comptez les votes et identifiez le gagnant.',
-            action: 'Compter les votes et annoncer le joueur éliminé.',
+            title: 'Résolution',
+            description: 'Appliquer l’élimination, gérer Grand Cru-badour si concerné.',
+            action: '30s performance; si quelqu’un rit: éliminer à la place, sinon mort du GC-badour.',
             icon: <CheckCircle className="w-5 h-5 text-green-400" />
-          },
-          {
-            title: 'Élimination',
-            description: 'Éliminez le joueur voté.',
-            action: 'Révéler le rôle du joueur éliminé et le retirer du jeu.',
-            icon: <XCircle className="w-5 h-5 text-red-400" />
           }
         ]
       },
       end: {
         title: 'Fin de Partie',
-        description: 'Déterminez le vainqueur et terminez la partie.',
+        description: 'Révélez tous les rôles et annoncez le vainqueur.',
         steps: [
           {
             title: 'Vérification des conditions',
-            description: 'Vérifiez les conditions de victoire.',
-            action: 'Compter les joueurs restants et vérifier les conditions de victoire.',
+            description: 'Comptage final des équipes.',
+            action: 'Déterminer l’équipe gagnante.',
             icon: <CheckCircle className="w-5 h-5 text-green-400" />
           },
           {
             title: 'Annonce du vainqueur',
-            description: 'Annoncez l\'équipe gagnante.',
-            action: 'Révéler tous les rôles et annoncer le vainqueur.',
+            description: 'Révélation générale des rôles.',
+            action: 'Clôturer la partie et proposer une revanche.',
             icon: <Crown className="w-5 h-5 text-yellow-400" />
-          },
-          {
-            title: 'Conclusion',
-            description: 'Permettez aux joueurs de rejouer ou de quitter.',
-            action: 'Féliciter les vainqueurs et proposer une nouvelle partie.',
-            icon: <Users className="w-5 h-5 text-green-400" />
           }
         ]
       }

@@ -27,7 +27,7 @@ interface ChatMessage {
 
 export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayers, deadPlayers, eliminatedPlayerId }: DayPhaseProps) => {
   const { currentGame } = useGameStore();
-  const [currentStep, setCurrentStep] = useState<'events' | 'discussion' | 'accusations'>('events');
+  const [currentStep, setCurrentStep] = useState<'shots' | 'detection' | 'lastsip' | 'discussion' | 'accusations'>('shots');
   const [discussionTime, setDiscussionTime] = useState(300); // 5 minutes
   const [isDiscussionActive, setIsDiscussionActive] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -157,7 +157,9 @@ export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayer
         <div className="flex justify-center mb-6">
           <div className="flex space-x-2 bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-gray-200">
             {[
-              { key: 'events', label: 'Événements', icon: AlertTriangle, color: 'text-red-500' },
+              { key: 'shots', label: 'Shots', icon: Zap, color: 'text-purple-500' },
+              { key: 'detection', label: 'Détection 15s', icon: Eye, color: 'text-red-500' },
+              { key: 'lastsip', label: 'Dernière gorgée', icon: Heart, color: 'text-pink-500' },
               { key: 'discussion', label: 'Discussion', icon: MessageCircle, color: 'text-blue-500' },
               { key: 'accusations', label: 'Accusations', icon: Users, color: 'text-purple-500' }
             ].map(({ key, label, icon: Icon, color }) => (
@@ -179,10 +181,10 @@ export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayer
 
         {/* Contenu selon l'étape */}
         <div className="flex-1 overflow-hidden">
-          {/* Étape 1: Révélation des événements de la nuit */}
-          {currentStep === 'events' && (
+          {/* Étape 1: Révélation des shots */}
+          {currentStep === 'shots' && (
             <motion.div
-              key="events"
+              key="shots"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 50 }}
@@ -190,29 +192,18 @@ export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayer
             >
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-gray-200 shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-                  🌙 Événements de la Nuit
+                  🥃 Révélation des Shots
                 </h2>
                 
                 <div className="space-y-4">
-                  <motion.div
-                    key="night-event"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Skull className="w-5 h-5 text-red-500" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(currentGame?.players || []).map(p => (
+                      <div key={p.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200 flex items-center justify-between">
+                        <span className="text-gray-800 font-medium">{p.name}</span>
+                        <span className="text-xs text-gray-500">Verre distribué</span>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-gray-800 font-medium">Un joueur a été assassiné.</p>
-                        <p className="text-sm text-gray-500">
-                          Il y a 1 minute
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -283,7 +274,47 @@ export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayer
             </motion.div>
           )}
 
-          {/* Étape 2: Discussion */}
+          {/* Étape 2: Détection 15s */}
+          {currentStep === 'detection' && (
+            <motion.div
+              key="detection"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+              className="h-full flex flex-col"
+            >
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-4 border border-gray-200 shadow-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl font-bold text-gray-800">⏱️ Détection de la victime (15s)</h2>
+                  <div className="text-sm text-gray-600">Le village pointe la victime supposée</div>
+                </div>
+                <div className="text-center">
+                  <button onClick={() => setCurrentStep('lastsip')} className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600">Terminer la détection</button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Étape 3: Dernière gorgée / mort immédiate */}
+          {currentStep === 'lastsip' && (
+            <motion.div
+              key="lastsip"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 50 }}
+              className="h-full flex flex-col"
+            >
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 mb-4 border border-gray-200 shadow-lg">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">🍷 Dernière gorgée ou exécution</h2>
+                <p className="text-gray-600 mb-4">Le Maître applique la règle selon la détection: mort immédiate après 30s, ou dernière gorgée puis mort. (Narratif)</p>
+                <div className="text-center">
+                  <button onClick={() => setCurrentStep('discussion')} className="px-6 py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600">Passer à la discussion</button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Étape 4: Discussion */}
           {currentStep === 'discussion' && (
             <motion.div
               key="discussion"
@@ -396,7 +427,7 @@ export const DayPhase = ({ isActive, onPhaseComplete, currentPlayer, alivePlayer
             </motion.div>
           )}
 
-          {/* Étape 3: Accusations */}
+          {/* Étape 5: Accusations */}
           {currentStep === 'accusations' && (
             <motion.div
               key="accusations"

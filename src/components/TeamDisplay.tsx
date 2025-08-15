@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
+import { Eye, Zap, Target, Heart, Users, Moon } from 'lucide-react';
 import Image from 'next/image';
 import { Role } from '@/types/game';
 import { getRoleAssets } from '@/lib/roleAssets';

@@ -7,6 +7,9 @@ import {
   GameSettings,
   Role,
   PlayerStatus,
+  PhaseStep,
+  PendingNightState,
+  ShotType,
 } from "@/types/game";
 import { gameApi, playerApi, gameActionApi } from "@/lib/gameApi";
 
@@ -44,6 +47,10 @@ interface GameStore extends GameState {
   syncPlayerState: (playerData: Player) => void;
   resolveStateConflict: (localState: Game, remoteState: Game) => Game;
   updateGamePhase: (phase: GamePhase, data?: Record<string, unknown>) => void;
+  updatePhaseStep: (phaseStep: PhaseStep) => void;
+  setPendingNightState: (updates: Partial<PendingNightState>) => void;
+  buildShotPlan: () => void;
+  applyVillageoiseSwap: () => void;
   updatePlayerStatus: (
     playerId: string,
     status: PlayerStatus,
@@ -394,6 +401,125 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     set({ currentGame: updatedGame });
     console.log(`🔄 Phase de jeu mise à jour: ${phase}`);
+  },
+
+  updatePhaseStep: (phaseStep: PhaseStep) => {
+    const { currentGame } = get();
+    if (!currentGame) return;
+
+    const updatedGame = {
+      ...currentGame,
+      phaseStep,
+      updatedAt: new Date(),
+    } as Game;
+
+    set({ currentGame: updatedGame });
+    console.log(`➡️ Sous-phase mise à jour: ${phaseStep}`);
+  },
+
+  setPendingNightState: (updates: Partial<PendingNightState>) => {
+    const { currentGame } = get();
+    if (!currentGame) return;
+
+    const merged: PendingNightState = {
+      ...(currentGame.pendingNightState || {}),
+      ...updates,
+    };
+
+    const updatedGame: Game = {
+      ...currentGame,
+      pendingNightState: merged,
+      updatedAt: new Date(),
+    };
+
+    set({ currentGame: updatedGame });
+    console.log("🌙 État de nuit mis à jour", merged);
+  },
+
+  buildShotPlan: () => {
+    const { currentGame } = get();
+    if (!currentGame) return;
+
+    const pending = currentGame.pendingNightState || {};
+    const plan: Record<string, ShotType> = {};
+
+    // Base: water for everyone
+    for (const p of currentGame.players) {
+      plan[p.id] = "water";
+    }
+
+    // Wolves victim gets alcohol
+    if (pending.wolvesTargetId) {
+      plan[pending.wolvesTargetId] = "alcohol";
+    }
+
+    // Cupid'Eau protection overrides wolves alcohol with magical
+    if (
+      pending.cupidProtectId &&
+      pending.wolvesTargetId &&
+      pending.cupidProtectId === pending.wolvesTargetId
+    ) {
+      plan[pending.wolvesTargetId] = "magical";
+    }
+
+    // Sucière decisions
+    if (pending.suciereDecision === "save" && pending.wolvesTargetId) {
+      plan[pending.wolvesTargetId] = "empty"; // empty glass shown to saved victim
+    }
+    if (pending.suciereDecision === "kill" && pending.suciereKillTargetId) {
+      plan[pending.suciereKillTargetId] = "alcohol-suciere";
+    }
+
+    const updatedGame: Game = {
+      ...currentGame,
+      shotPlan: plan,
+      updatedAt: new Date(),
+    };
+
+    set({ currentGame: updatedGame });
+    console.log("🥃 Plan des shots construit", plan);
+  },
+
+  applyVillageoiseSwap: () => {
+    const { currentGame } = get();
+    if (!currentGame) return;
+
+    const swap = currentGame.pendingNightState?.villageoiseSwap;
+    if (!swap) return;
+
+    const players = [...currentGame.players];
+    const findIndexById = (id: string) => players.findIndex((p) => p.id === id);
+
+    if (swap.mode === "self" && swap.bId) {
+      const idxA = findIndexById(swap.aId);
+      const idxB = findIndexById(swap.bId);
+      if (idxA >= 0 && idxB >= 0) {
+        const roleA = players[idxA].role;
+        players[idxA] = { ...players[idxA], role: players[idxB].role };
+        players[idxB] = { ...players[idxB], role: roleA };
+      }
+    } else if (swap.mode === "others" && swap.bId) {
+      const idxA = findIndexById(swap.aId);
+      const idxB = findIndexById(swap.bId);
+      if (idxA >= 0 && idxB >= 0) {
+        const roleA = players[idxA].role;
+        players[idxA] = { ...players[idxA], role: players[idxB].role };
+        players[idxB] = { ...players[idxB], role: roleA };
+      }
+    }
+
+    const updatedGame: Game = {
+      ...currentGame,
+      players,
+      pendingNightState: {
+        ...(currentGame.pendingNightState || {}),
+        villageoiseSwap: null,
+      },
+      updatedAt: new Date(),
+    };
+
+    set({ currentGame: updatedGame });
+    console.log("🔁 Échange de rôles appliqué (Véritable Villageoise)");
   },
 
   updatePlayerStatus: (
