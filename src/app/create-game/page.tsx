@@ -7,22 +7,15 @@ import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAllRoles, getDefaultRoleCounts, getTotalRoleCount, validateRoleCounts, RoleData } from '@/data/roles';
 import { Role } from '@/types/game';
+import Image from 'next/image';
+import { getRoleAssets } from '@/lib/roleAssets';
 import ScaryAnimations from '@/components/ScaryAnimations';
 import ScaryHoverEffects from '@/components/ScaryHoverEffects';
 import RealtimeTest from '@/components/RealtimeTest';
 
-// Illustrations pour chaque rôle
-const roleIllustrations: Record<Role, string> = {
-  "loup-garou": "🐺",
-  "villageois": "🏠",
-  "voyante": "🔮",
-  "chasseur": "🏹",
-  "cupidon": "💘",
-  "sorciere": "🧙‍♀️",
-  "petite-fille": "👧",
-  "capitaine": "⚓",
-  "voleur": "🦹‍♂️",
-};
+// Helper accessors
+const roleIllustrationSrc = (role: Role) => getRoleAssets(role).illustrationSrc;
+const roleDisplayName = (role: Role) => getRoleAssets(role).displayName;
 
 export default function CreateGamePage() {
   const { createGame, isLoading, error } = useGameStore();
@@ -279,8 +272,8 @@ export default function CreateGamePage() {
                       transition={{ duration: 0.2 }}
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <motion.span 
-                          className="text-2xl"
+                        <motion.div
+                          className="w-40 h-40 relative"
                           animate={{ 
                             filter: role.team === 'loup-garou' ? [
                               "drop-shadow(0 0 5px rgba(255, 0, 0, 0.5))",
@@ -290,11 +283,17 @@ export default function CreateGamePage() {
                           }}
                           transition={{ duration: 2, repeat: role.team === 'loup-garou' ? Infinity : 0 }}
                         >
-                          {roleIllustrations[role.id]}
-                        </motion.span>
+                          <Image
+                            src={roleIllustrationSrc(role.id)}
+                            alt={roleDisplayName(role.id)}
+                            fill
+                            sizes="80px"
+                            className="object-contain"
+                          />
+                        </motion.div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-[#e0e0e0]">{role.name}</span>
+                            <span className="font-semibold text-[#e0e0e0]">{roleDisplayName(role.id)}</span>
                           </div>
                           <p className="text-sm text-[#cccccc]">{role.description}</p>
                         </div>
@@ -392,8 +391,16 @@ export default function CreateGamePage() {
                           className="flex items-center justify-between"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-lg">{roleIllustrations[role as Role]}</span>
-                            <span className="text-[#cccccc]">{getRoleData(role as Role).name}:</span>
+                            <span className="relative w-20 h-20">
+                              <Image
+                                src={roleIllustrationSrc(role as Role)}
+                                alt={roleDisplayName(role as Role)}
+                                fill
+                                sizes="56px"
+                                className="object-contain"
+                              />
+                            </span>
+                            <span className="text-[#cccccc]">{roleDisplayName(role as Role)}:</span>
                           </div>
                           <span className="text-[#e0e0e0] font-semibold">{count}</span>
                         </div>

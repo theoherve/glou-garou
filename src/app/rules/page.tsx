@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { ArrowLeft, Moon, Users, Clock, Target } from 'lucide-react';
+import Image from 'next/image';
+import { getRoleAssets } from '@/lib/roleAssets';
 import Link from 'next/link';
 import { getAllRoles } from '@/data/roles';
 
@@ -147,10 +149,17 @@ export default function RulesPage() {
                         : 'bg-[#333a45]/20 border-[#333a45]/30'
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-[#e0e0e0]">{role.name}</span>
-                      {role.team === 'loup-garou' && <span className="text-red-400">🐺</span>}
-                      {role.team === 'village' && <span className="text-blue-400">🏠</span>}
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="relative w-16 h-16">
+                        <Image
+                          src={getRoleAssets(role.id).illustrationSrc}
+                          alt={getRoleAssets(role.id).displayName}
+                          fill
+                          sizes="64px"
+                          className="object-contain"
+                        />
+                      </span>
+                      <span className="font-semibold text-[#e0e0e0]">{getRoleAssets(role.id).displayName}</span>
                     </div>
                     <p className="text-sm text-[#cccccc]">{role.description}</p>
                     {role.nightAction && (
