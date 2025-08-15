@@ -14,7 +14,7 @@ interface GameMasterPanelProps {
 }
 
 export const GameMasterPanel = ({ isVisible, onClose }: GameMasterPanelProps) => {
-  const { currentGame, currentPlayer } = useGameStore();
+  const { currentGame, currentPlayer, updatePhaseStep, setPendingNightState, buildShotPlan, updatePlayerStatus, applyVillageoiseSwap } = useGameStore();
   const [currentPhase, setCurrentPhase] = useState<'preparation' | 'night' | 'day' | 'vote' | 'end'>('preparation');
   const [phaseTimer, setPhaseTimer] = useState<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -82,6 +82,105 @@ export const GameMasterPanel = ({ isVisible, onClose }: GameMasterPanelProps) =>
         bgColor: 'bg-green-900/20',
         borderColor: 'border-green-500/30'
       };
+    }
+  };
+
+  // Liste des joueurs vivants et sélecteur générique
+  const alivePlayers = currentGame?.players.filter(p => p.status === 'alive') || [];
+  const selectTarget = (label: string, onSelect: (playerId: string) => void) => (
+    <div className="space-y-2">
+      <p className="text-gray-300 text-sm">{label}</p>
+      <div className="grid grid-cols-2 gap-2">
+        {alivePlayers.map(p => (
+          <button
+            key={p.id}
+            onClick={() => onSelect(p.id)}
+            className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100 text-sm"
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Flow des sous-phases de nuit selon la trame
+  const renderNightSubphases = () => {
+    if (!currentGame) return null;
+    const step = currentGame.phaseStep;
+    const pending = currentGame.pendingNightState || {};
+
+    switch (step) {
+      case 'wolves':
+        return (
+          <div className="space-y-3">
+            {selectTarget('Cible des Glou-Garous', (id) => setPendingNightState({ wolvesTargetId: id }))}
+            <button onClick={() => updatePhaseStep('camel-bent')} className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm">Suivant: Camel Bent</button>
+          </div>
+        );
+      case 'camel-bent':
+        return (
+          <div className="space-y-3">
+            {selectTarget('Devine la victime des Glou-Garous', (id) => setPendingNightState({ camelBentGuessId: id, pendingResurrectionId: (pending.wolvesTargetId && id === pending.wolvesTargetId) ? id : pending.pendingResurrectionId }))}
+            <button onClick={() => updatePhaseStep('cupid-eau')} className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm">Suivant: Cupid’Eau</button>
+          </div>
+        );
+      case 'cupid-eau':
+        return (
+          <div className="space-y-3">
+            {selectTarget('Shot magique de Cupid’Eau (optionnel)', (id) => setPendingNightState({ cupidProtectId: id }))}
+            <div className="flex gap-2">
+              <button onClick={() => setPendingNightState({ cupidProtectId: undefined })} className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white text-sm">Ne rien faire</button>
+              <button onClick={() => updatePhaseStep('suciere')} className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm">Suivant: Sucière</button>
+            </div>
+          </div>
+        );
+      case 'suciere':
+        return (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <button onClick={() => setPendingNightState({ suciereDecision: 'save', suciereKillTargetId: undefined })} className="p-2 bg-green-600 hover:bg-green-700 rounded-lg text-white text-sm">Sauver la victime des loups</button>
+              <button onClick={() => setPendingNightState({ suciereDecision: 'none', suciereKillTargetId: undefined })} className="p-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm">Ne rien faire</button>
+            </div>
+            {selectTarget('Tuer quelqu’un (optionnel)', (id) => setPendingNightState({ suciereDecision: 'kill', suciereKillTargetId: id }))}
+            <button onClick={() => updatePhaseStep('veritable-villageoise')} className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm">Suivant: Véritable Villageoise</button>
+          </div>
+        );
+      case 'veritable-villageoise':
+        return (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <button onClick={() => setPendingNightState({ villageoiseSwap: null })} className="p-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-white text-sm">Ne rien faire</button>
+            </div>
+            {selectTarget('Échanger sa carte avec…', (id) => setPendingNightState({ villageoiseSwap: { mode: 'self', aId: currentPlayer!.id, bId: id } }))}
+            <div className="space-y-2">
+              <p className="text-gray-300 text-sm">Échanger les cartes de 2 autres joueurs</p>
+              <div className="grid grid-cols-2 gap-2">
+                {alivePlayers.map(a => (
+                  <div key={a.id} className="bg-gray-800 rounded-lg p-2">
+                    <div className="text-gray-200 text-sm mb-1">A: {a.name}</div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {alivePlayers.filter(b => b.id !== a.id).map(b => (
+                        <button key={b.id} onClick={() => setPendingNightState({ villageoiseSwap: { mode: 'others', aId: a.id, bId: b.id } })} className="p-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-100">B: {b.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { applyVillageoiseSwap(); buildShotPlan(); updatePhaseStep('night-complete'); }} className="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm">Construire les shots</button>
+            </div>
+          </div>
+        );
+      case 'night-complete':
+        return (
+          <div className="space-y-3">
+            <p className="text-gray-200 text-sm">Nuit terminée. Passez au matin pour révéler les shots.</p>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -361,6 +460,46 @@ export const GameMasterPanel = ({ isVisible, onClose }: GameMasterPanelProps) =>
 
             {/* Colonne 2: Instructions et log */}
             <div className="space-y-6">
+              {/* Sous-phases de la nuit (Trame) */}
+              {currentPhase === 'night' && (
+                <motion.div
+                  className="bg-[#3a3a3a] rounded-lg p-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.5 }}
+                >
+                  <h3 className="text-lg font-semibold text-white mb-3">🌙 Sous-phases Nuit (Trame)</h3>
+                  {/* Résurrection Camel Bent si prévue */}
+                  {currentGame?.pendingNightState?.pendingResurrectionId && (
+                    <div className="mb-3 p-3 rounded bg-purple-900/20 border border-purple-500/30">
+                      <p className="text-purple-200 text-sm mb-2">Résurrection prévue: Un joueur sera ressuscité (Camel Bent)</p>
+                      <button
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs"
+                        onClick={() => {
+                          const targetId = currentGame.pendingNightState!.pendingResurrectionId!;
+                          updatePlayerStatus(targetId, 'alive');
+                          setPendingNightState({ pendingResurrectionId: undefined });
+                        }}
+                      >
+                        Ressusciter maintenant
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {['wolves','camel-bent','cupid-eau','suciere','veritable-villageoise','night-complete'].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => updatePhaseStep(s as any)}
+                        className={`px-3 py-1 rounded text-xs ${currentGame?.phaseStep === s ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600'}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  {renderNightSubphases()}
+                </motion.div>
+              )}
+
               {/* Instructions de phase */}
               <motion.div
                 className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4"
@@ -408,6 +547,44 @@ export const GameMasterPanel = ({ isVisible, onClose }: GameMasterPanelProps) =>
                   )}
                 </div>
               </motion.div>
+
+              {/* Aperçu Plan des Shots */}
+              {currentGame?.shotPlan && (
+                <motion.div
+                  className="bg-[#3a3a3a] rounded-lg p-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45, duration: 0.5 }}
+                >
+                  <h3 className="text-lg font-semibold text-white mb-3">🥃 Plan des Shots</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {Object.entries(currentGame.shotPlan).map(([playerId, type]) => {
+                      const p = currentGame.players.find(pl => pl.id === playerId);
+                      if (!p) return null;
+                      return (
+                        <div key={playerId} className="p-2 rounded bg-gray-800 flex items-center justify-between">
+                          <span className="text-gray-100 text-sm">{p.name}</span>
+                          <span className="text-xs text-gray-300">{type}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+                      onClick={() => {
+                        Object.entries(currentGame.shotPlan || {}).forEach(([playerId, type]) => {
+                          if (type === 'alcohol' || type === 'alcohol-suciere') {
+                            updatePlayerStatus(playerId, 'dead');
+                          }
+                        });
+                      }}
+                    >
+                      Appliquer les morts (loups & sucière)
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Colonne 3: Vue d'ensemble des joueurs */}
