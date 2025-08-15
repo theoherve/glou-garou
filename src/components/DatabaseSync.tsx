@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useSupabaseSubscription } from '@/hooks/useSupabaseSubscription';
 import { useGameStore } from '@/store/gameStore';
 import { useRealtime } from './RealtimeProvider';
+import { Player, Role, PlayerStatus } from '@/types/game';
 
 interface DatabaseSyncProps {
   roomCode: string;
@@ -23,6 +24,34 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     restoreGameState
   } = useGameStore();
   const { isConnected } = useRealtime();
+
+  const validRoles: Role[] = [
+    'loup-garou',
+    'villageois',
+    'voyante',
+    'chasseur',
+    'cupidon',
+    'sorciere',
+    'petite-fille',
+    'capitaine',
+    'voleur',
+  ];
+
+  const toPlayer = (row: any): Player => {
+    const role: Role = validRoles.includes(row?.role as Role) ? (row.role as Role) : 'villageois';
+    const status: PlayerStatus = (row?.status as PlayerStatus) || 'alive';
+    return {
+      id: row.id,
+      name: typeof row.name === 'string' ? row.name : 'Joueur',
+      role,
+      status,
+      isGameMaster: !!row.is_game_master,
+      isLover: !!row.is_lover,
+      loverId: row.lover_id || undefined,
+      hasUsedAbility: !!row.has_used_ability,
+      voteTarget: row.vote_target || undefined,
+    };
+  };
   
   // Référence pour stocker le dernier snapshot
   const lastSnapshotRef = useRef<any>(null);
@@ -81,8 +110,20 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     onData: (payload) => {
       console.log('Game update received:', payload);
       if ((payload.eventType === 'UPDATE' || payload.type === 'UPDATE') && payload.new) {
-        // Utiliser la nouvelle fonction de synchronisation
-        syncGameState(payload.new);
+        // Fusion non destructive: ne remplace pas l'objet jeu par la ligne brute Supabase
+        const newPhase = payload.new.phase;
+        const newNight = payload.new.current_night;
+        const newSettings = payload.new.game_settings;
+        const newUpdatedAt = payload.new.updated_at ? new Date(payload.new.updated_at) : new Date();
+        if (currentGame) {
+          setCurrentGame({
+            ...currentGame,
+            phase: newPhase ?? currentGame.phase,
+            currentNight: typeof newNight === 'number' ? newNight : currentGame.currentNight,
+            gameSettings: newSettings ?? currentGame.gameSettings,
+            updatedAt: newUpdatedAt,
+          });
+        }
       }
     },
     onError: (error) => {
@@ -101,14 +142,16 @@ export const DatabaseSync = ({ roomCode }: DatabaseSyncProps) => {
     onData: (payload) => {
       console.log('Player update received:', payload);
       if ((payload.eventType === 'UPDATE' || payload.type === 'UPDATE') && payload.new) {
-        // Utiliser la nouvelle fonction de synchronisation
-        syncPlayerState(payload.new);
+        // Normaliser la ligne Supabase en Player typé
+        const normalized = toPlayer(payload.new);
+        syncPlayerState(normalized);
       } else if ((payload.eventType === 'INSERT' || payload.type === 'INSERT') && payload.new) {
         // Ajouter un nouveau joueur
         if (currentGame) {
+          const normalized = toPlayer(payload.new);
           const updatedGame = {
             ...currentGame,
-            players: [...currentGame.players, payload.new],
+            players: [...currentGame.players, normalized],
             updatedAt: new Date(),
           };
           setCurrentGame(updatedGame);

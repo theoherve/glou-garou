@@ -3,15 +3,8 @@
 import { motion } from 'framer-motion';
 import { Eye, Zap, Target, Heart, Users, Moon } from 'lucide-react';
 import Image from 'next/image';
-import { Role } from '@/types/game';
+import { Role, Player } from '@/types/game';
 import { getRoleAssets } from '@/lib/roleAssets';
-
-interface Player {
-  id: string;
-  name: string;
-  role: Role;
-  isGameMaster?: boolean;
-}
 
 interface TeamDisplayProps {
   players: Player[];
@@ -19,6 +12,9 @@ interface TeamDisplayProps {
 }
 
 export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
+  const safePlayers: Player[] = Array.isArray(players)
+    ? players.filter((p: any) => p && p.id && typeof p.name === 'string' && p.role)
+    : [];
   const getRoleIcon = (role: Role) => {
     const { illustrationSrc, displayName } = getRoleAssets(role);
     return (
@@ -55,8 +51,8 @@ export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
   };
 
   // Grouper les joueurs par équipe
-  const villageois = players.filter(p => p.role !== 'loup-garou');
-  const loups = players.filter(p => p.role === 'loup-garou');
+  const villageois = safePlayers.filter(p => p.role !== 'loup-garou');
+  const loups = safePlayers.filter(p => p.role === 'loup-garou');
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -133,7 +129,7 @@ export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
                   <div className="flex items-center space-x-3">
                     {getRoleIcon(player.role)}
                     <div>
-                      <p className="text-white font-medium">{player.name}</p>
+                      <p className="text-white font-medium">{player.name || 'Joueur'}</p>
                       <p className={`text-sm ${teamInfo.color}`}>
                         {getRoleName(player.role)}
                       </p>
@@ -182,7 +178,7 @@ export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
                   <div className="flex items-center space-x-3">
                     {getRoleIcon(player.role)}
                     <div>
-                      <p className="text-white font-medium">{player.name}</p>
+                      <p className="text-white font-medium">{player.name || 'Joueur'}</p>
                       <p className={`text-sm ${teamInfo.color}`}>
                         {getRoleName(player.role)}
                       </p>
