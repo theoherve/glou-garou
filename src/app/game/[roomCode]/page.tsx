@@ -37,12 +37,9 @@ import { NightPhase } from '@/components/NightPhase';
 import { DayPhase } from '@/components/DayPhase';
 import { VotingPhase } from '@/components/VotingPhase';
 import { UXUIEnhancements } from '@/components/UXUIEnhancements';
-import { Phase9TestSuite } from '@/components/Phase9TestSuite';
 
 import { DatabaseSync } from '@/components/DatabaseSync';
-import { DatabaseSyncTest } from '@/components/DatabaseSyncTest';
 import { GameHistory } from '@/components/GameHistory';
-import { ApiTest } from '@/components/ApiTest';
 import { DebugPanel } from '@/components/DebugPanel';
 import { PlayerDataDebug } from '@/components/PlayerDataDebug';
 import { ConnectionManager } from '@/components/ConnectionManager';
@@ -367,10 +364,7 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
               {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </button>
 
-            {/* Settings */}
-            <button className="p-2 hover:bg-[#ff3333]/20 rounded transition-colors" title="Paramètres">
-              <Settings className="w-5 h-5" />
-            </button>
+            
           </div>
         </div>
       </header>
@@ -383,17 +377,12 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
             {/* Connected Players */}
             <ConnectedPlayers />
 
-            {/* Player Connection Status - Phase 7 */}
-            <PlayerConnectionStatus showDetails={true} />
-
-            {/* State Backup Manager - Phase 7 */}
-            <StateBackupManager roomCode={roomCode} />
+            
 
             {/* Auto Start Manager - Phase 3 */}
             <AutoStartManager roomCode={roomCode} />
 
-            {/* Phase 5 Test - Interface du Maître de Jeu */}
-            {isGameMaster && <Phase5Test />}
+            
 
             {/* Révélation des Rôles - Phase 4 */}
             {currentGame.phase === 'preparation' && (
@@ -497,45 +486,11 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
 
 
             
-            {/* Database Sync Test (temporaire pour le développement) */}
-            <DatabaseSyncTest roomCode={roomCode} />
             
-            {/* API Test (temporaire pour le développement) */}
-            <ApiTest roomCode={roomCode} />
             
-            {/* Phase 9 - Suite de Tests Complète */}
-            <Phase9TestSuite roomCode={roomCode} />
             
-            {/* Panel de débogage (temporaire pour le développement) */}
-            <DebugPanel roomCode={roomCode} />
-            
-            {/* Debug des données des joueurs */}
-            <PlayerDataDebug />
 
-            {/* Démonstration des améliorations UX/UI */}
-            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
-              <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center">
-                <span className="text-2xl mr-2">🎨</span>
-                Améliorations UX/UI
-              </h2>
-              <p className="text-[#cccccc] mb-4">
-                Découvrez les nouvelles animations et améliorations de l'interface
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#ff3333]/20">
-                  <h3 className="text-lg font-medium text-[#e0e0e0] mb-2">✨ Animations</h3>
-                  <p className="text-sm text-[#cccccc]">
-                    Transitions fluides, micro-interactions et effets visuels
-                  </p>
-                </div>
-                <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#ff3333]/20">
-                  <h3 className="text-lg font-medium text-[#e0e0e0] mb-2">📱 Responsive</h3>
-                  <p className="text-sm text-[#cccccc]">
-                    Interface optimisée pour mobile et tablette
-                  </p>
-                </div>
-              </div>
-            </div>
+            
 
             {/* Players Grid */}
             <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
