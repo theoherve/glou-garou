@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRoleData } from '@/data/roles';
+import Image from 'next/image';
+import { getRoleAssets } from '@/lib/roleAssets';
 import { GamePhase } from '@/types/game';
 import { GameMasterPanel } from '@/components/GameMasterPanel';
 import { GameInstructions } from '@/components/GameInstructions';
@@ -571,8 +573,16 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
 
                         {/* Player Info */}
                         <div className="text-center">
-                          <div className="text-2xl mb-2">
-                            {player.role === 'loup-garou' ? '🐺' : '🏠'}
+                          <div className="mb-2">
+                            <div className="relative w-20 h-20 mx-auto">
+                              <Image
+                                src={getRoleAssets(player.role).illustrationSrc}
+                                alt={getRoleAssets(player.role).displayName}
+                                fill
+                                sizes="80px"
+                                className="object-contain"
+                              />
+                            </div>
                           </div>
                           <div className="font-semibold mb-1 truncate">
                             {player.name}
@@ -602,11 +612,19 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
             <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#ff3333]/20">
               <h3 className="text-lg font-semibold text-[#e0e0e0] mb-3">Votre rôle</h3>
               <div className="text-center">
-                <div className="text-2xl mb-2">
-                  {currentPlayer.role === 'loup-garou' ? '🐺' : '🏠'}
+                <div className="mb-2">
+                  <div className="relative w-20 h-20 mx-auto">
+                    <Image
+                      src={getRoleAssets(currentPlayer.role).illustrationSrc}
+                      alt={getRoleAssets(currentPlayer.role).displayName}
+                      fill
+                      sizes="80px"
+                      className="object-contain"
+                    />
+                  </div>
                 </div>
                 <div className="text-[#e0e0e0] font-semibold mb-1">
-                  {getRoleData(currentPlayer.role).name}
+                  {getRoleAssets(currentPlayer.role).displayName}
                 </div>
                 <p className="text-sm text-[#cccccc]">
                   {getRoleData(currentPlayer.role).description}

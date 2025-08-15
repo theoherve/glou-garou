@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/store/gameStore';
 import { Crown, Users, Moon, Sun, Target, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
+import { getRoleAssets } from '@/lib/roleAssets';
 import { GamePhase } from '@/types/game';
 
 interface GameStartNotificationProps {
@@ -159,8 +161,17 @@ export const GameStartNotification = ({ isVisible, onClose }: GameStartNotificat
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{player.name}</span>
-                        <span className="text-sm capitalize">
-                          {player.role === 'loup-garou' ? '🐺' : '🏠'} {player.role}
+                        <span className="flex items-center gap-2 text-sm">
+                          <span className="relative w-10 h-10">
+                            <Image
+                              src={getRoleAssets(player.role as any).illustrationSrc}
+                              alt={getRoleAssets(player.role as any).displayName}
+                              fill
+                              sizes="40px"
+                              className="object-contain"
+                            />
+                          </span>
+                          <span>{getRoleAssets(player.role as any).displayName}</span>
                         </span>
                       </div>
                       {player.isGameMaster && (

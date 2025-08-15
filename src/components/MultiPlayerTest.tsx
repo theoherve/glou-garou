@@ -19,6 +19,8 @@ import {
   Crown,
   Bot
 } from 'lucide-react';
+import Image from 'next/image';
+import { getRoleAssets } from '@/lib/roleAssets';
 import { useGameStore } from '@/store/gameStore';
 import { useRealtime } from './RealtimeProvider';
 
@@ -276,16 +278,16 @@ export const MultiPlayerTest = ({ roomCode }: { roomCode: string }) => {
   };
 
   const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'loup-garou': return '🐺';
-      case 'voyante': return '🔮';
-      case 'sorcière': return '🧙‍♀️';
-      case 'chasseur': return '🏹';
-      case 'cupidon': return '💘';
-      case 'petite-fille': return '👧';
-      case 'grand-mère': return '👵';
-      default: return '🏠';
-    }
+    const { illustrationSrc, displayName } = getRoleAssets(role as any);
+    return (
+      <Image
+        src={illustrationSrc}
+        alt={displayName}
+        width={56}
+        height={56}
+        className="w-14 h-14 object-contain"
+      />
+    );
   };
 
   if (!isExpanded) {

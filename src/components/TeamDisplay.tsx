@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Users, Moon, Shield, Eye, Zap, Target, Heart } from 'lucide-react';
+import Image from 'next/image';
 import { Role } from '@/types/game';
+import { getRoleAssets } from '@/lib/roleAssets';
 
 interface Player {
   id: string;
@@ -18,42 +19,19 @@ interface TeamDisplayProps {
 
 export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
   const getRoleIcon = (role: Role) => {
-    switch (role) {
-      case 'loup-garou':
-        return <Moon className="w-4 h-4 text-red-400" />;
-      case 'villageois':
-        return <Users className="w-4 h-4 text-green-400" />;
-      case 'voyante':
-        return <Eye className="w-4 h-4 text-purple-400" />;
-      case 'sorciere':
-        return <Zap className="w-4 h-4 text-blue-400" />;
-      case 'chasseur':
-        return <Target className="w-4 h-4 text-orange-400" />;
-      case 'petite-fille':
-        return <Heart className="w-4 h-4 text-pink-400" />;
-      default:
-        return <Shield className="w-4 h-4 text-gray-400" />;
-    }
+    const { illustrationSrc, displayName } = getRoleAssets(role);
+    return (
+      <Image
+        src={illustrationSrc}
+        alt={displayName}
+        width={56}
+        height={56}
+        className="w-14 h-14 object-contain"
+      />
+    );
   };
 
-  const getRoleName = (role: Role) => {
-    switch (role) {
-      case 'loup-garou':
-        return 'Loup-Garou';
-      case 'villageois':
-        return 'Villageois';
-      case 'voyante':
-        return 'Voyante';
-      case 'sorciere':
-        return 'Sorcière';
-      case 'chasseur':
-        return 'Chasseur';
-      case 'petite-fille':
-        return 'Petite Fille';
-      default:
-        return 'Rôle inconnu';
-    }
-  };
+  const getRoleName = (role: Role) => getRoleAssets(role).displayName;
 
   const getTeamInfo = (role: Role) => {
     if (role === 'loup-garou') {
