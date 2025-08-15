@@ -2,16 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Crown, Settings, Play, Eye, Plus, Minus, AlertTriangle, Database, TestTube } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Play, Eye, Plus, Minus, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useGameStore } from '@/store/gameStore';
 import { getAllRoles, getDefaultRoleCounts, getTotalRoleCount, validateRoleCounts, RoleData } from '@/data/roles';
 import { Role } from '@/types/game';
 import Image from 'next/image';
 import { getRoleAssets } from '@/lib/roleAssets';
-import ScaryAnimations from '@/components/ScaryAnimations';
-import ScaryHoverEffects from '@/components/ScaryHoverEffects';
-import RealtimeTest from '@/components/RealtimeTest';
+// removed dev-only UI effects and test component
 
 // Helper accessors
 const roleIllustrationSrc = (role: Role) => getRoleAssets(role).illustrationSrc;
@@ -23,7 +21,7 @@ export default function CreateGamePage() {
   const [playerCount, setPlayerCount] = useState(8);
   const [roleCounts, setRoleCounts] = useState<Record<Role, number>>(getDefaultRoleCounts(8));
   const [roomCode, setRoomCode] = useState('');
-  const [showScaryAnimations, setShowScaryAnimations] = useState(false);
+  
   const [localError, setLocalError] = useState<string | null>(null);
 
   const allRoles = getAllRoles();
@@ -39,14 +37,7 @@ export default function CreateGamePage() {
     }
   }, []);
 
-  useEffect(() => {
-    // Activer les animations effrayantes après 2 secondes
-    const timer = setTimeout(() => {
-      setShowScaryAnimations(true);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  
 
   const handlePlayerCountChange = (newCount: number) => {
     setPlayerCount(newCount);
@@ -131,8 +122,7 @@ export default function CreateGamePage() {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] relative overflow-hidden">
-      {/* Animations effrayantes */}
-      <ScaryAnimations isActive={showScaryAnimations} intensity="low" />
+      
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
@@ -142,15 +132,13 @@ export default function CreateGamePage() {
           className="flex items-center gap-4 mb-8"
         >
           <Link href="/">
-            <ScaryHoverEffects intensity="low">
-              <motion.button
-                className="p-2 rounded-lg bg-[#2a2a2a] hover:bg-[#333333] transition-colors border border-[#ff3333]/20"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowLeft className="w-6 h-6 text-[#e0e0e0]" />
-              </motion.button>
-            </ScaryHoverEffects>
+            <motion.button
+              className="p-2 rounded-lg bg-[#2a2a2a] hover:bg-[#333333] transition-colors border border-[#ff3333]/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="w-6 h-6 text-[#e0e0e0]" />
+            </motion.button>
           </Link>
           <div className="flex items-center gap-3">
             <motion.div
@@ -184,8 +172,7 @@ export default function CreateGamePage() {
             className="space-y-6"
           >
             {/* Basic settings */}
-            <ScaryHoverEffects intensity="low">
-              <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
                 <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
                   <motion.div
                     animate={{ rotate: [0, 10, -10, 0] }}
@@ -219,14 +206,12 @@ export default function CreateGamePage() {
                         placeholder="Code de 6 caractères"
                         maxLength={6}
                       />
-                      <ScaryHoverEffects intensity="medium">
-                        <button
-                          onClick={generateRoomCode}
-                          className="px-4 py-3 bg-[#ff3333] hover:bg-[#e62e2e] text-white rounded-lg transition-colors font-semibold"
-                        >
-                          Générer
-                        </button>
-                      </ScaryHoverEffects>
+                      <button
+                        onClick={generateRoomCode}
+                        className="px-4 py-3 bg-[#ff3333] hover:bg-[#e62e2e] text-white rounded-lg transition-colors font-semibold"
+                      >
+                        Générer
+                      </button>
                     </div>
                   </div>
 
@@ -246,11 +231,9 @@ export default function CreateGamePage() {
                   </div>
                 </div>
               </div>
-            </ScaryHoverEffects>
 
             {/* Role selection */}
-            <ScaryHoverEffects intensity="low">
-              <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
                 <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -300,34 +283,29 @@ export default function CreateGamePage() {
                       </div>
                       
                       <div className="flex items-center gap-2 ml-4">
-                        <ScaryHoverEffects intensity="low">
-                          <button
-                            onClick={() => handleRoleCountChange(role.id, roleCounts[role.id] - 1)}
-                            disabled={roleCounts[role.id] <= 0}
-                            className="p-1 rounded bg-[#333333] hover:bg-[#444444] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <Minus className="w-4 h-4 text-[#e0e0e0]" />
-                          </button>
-                        </ScaryHoverEffects>
+                        <button
+                          onClick={() => handleRoleCountChange(role.id, roleCounts[role.id] - 1)}
+                          disabled={roleCounts[role.id] <= 0}
+                          className="p-1 rounded bg-[#333333] hover:bg-[#444444] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Minus className="w-4 h-4 text-[#e0e0e0]" />
+                        </button>
                         
                         <span className="w-8 text-center font-semibold text-[#e0e0e0]">
                           {roleCounts[role.id]}
                         </span>
                         
-                        <ScaryHoverEffects intensity="low">
-                          <button
-                            onClick={() => handleRoleCountChange(role.id, roleCounts[role.id] + 1)}
-                            className="p-1 rounded bg-[#333333] hover:bg-[#444444] transition-colors"
-                          >
-                            <Plus className="w-4 h-4 text-[#e0e0e0]" />
-                          </button>
-                        </ScaryHoverEffects>
+                        <button
+                          onClick={() => handleRoleCountChange(role.id, roleCounts[role.id] + 1)}
+                          className="p-1 rounded bg-[#333333] hover:bg-[#444444] transition-colors"
+                        >
+                          <Plus className="w-4 h-4 text-[#e0e0e0]" />
+                        </button>
                       </div>
                     </motion.div>
                   ))}
                 </div>
               </div>
-            </ScaryHoverEffects>
           </motion.div>
 
           {/* Right column - Preview and create */}
@@ -338,8 +316,7 @@ export default function CreateGamePage() {
             className="space-y-6"
           >
             {/* Game preview */}
-            <ScaryHoverEffects intensity="low">
-              <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#ff3333]/20">
                 <h2 className="text-xl font-semibold text-[#e0e0e0] mb-4 flex items-center gap-2">
                   <Crown className="w-5 h-5 text-[#ff9933]" />
                   Aperçu de la partie
@@ -438,38 +415,35 @@ export default function CreateGamePage() {
                   </motion.div>
                 )}
               </div>
-            </ScaryHoverEffects>
 
             {/* Create button */}
-            <ScaryHoverEffects intensity="high">
-              <motion.button
-                onClick={handleCreateGame}
-                disabled={!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid}
-                className="w-full bg-[#ff3333] hover:bg-[#e62e2e] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                animate={(!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid) ? {} : {
-                  boxShadow: [
-                    "0 0 20px rgba(255, 51, 51, 0.3)",
-                    "0 0 40px rgba(255, 51, 51, 0.6)",
-                    "0 0 20px rgba(255, 51, 51, 0.3)"
-                  ]
-                }}
-                transition={{ duration: 2, repeat: (!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid) ? 0 : Infinity }}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Création en cours...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-6 h-6" />
-                    Créer la partie
-                  </>
-                )}
-              </motion.button>
-            </ScaryHoverEffects>
+            <motion.button
+              onClick={handleCreateGame}
+              disabled={!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid}
+              className="w-full bg-[#ff3333] hover:bg-[#e62e2e] disabled:bg-[#666666] disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-semibold transition-all duration-300 flex items-center justify-center gap-3"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              animate={(!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid) ? {} : {
+                boxShadow: [
+                  "0 0 20px rgba(255, 51, 51, 0.3)",
+                  "0 0 40px rgba(255, 51, 51, 0.6)",
+                  "0 0 20px rgba(255, 51, 51, 0.3)"
+                ]
+              }}
+              transition={{ duration: 2, repeat: (!playerName.trim() || !roomCode.trim() || isLoading || !validation.isValid) ? 0 : Infinity }}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Création en cours...
+                </>
+              ) : (
+                <>
+                  <Play className="w-6 h-6" />
+                  Créer la partie
+                </>
+              )}
+            </motion.button>
 
             {/* Error display */}
             {(error || localError) && (
@@ -494,12 +468,10 @@ export default function CreateGamePage() {
               </motion.div>
             )}
 
-            {/* Test section */}
-            <RealtimeTest />
+            
 
             {/* Tips */}
-            <ScaryHoverEffects intensity="low">
-              <div className="bg-[#333a45]/20 rounded-lg p-4 border border-[#333a45]/30">
+            <div className="bg-[#333a45]/20 rounded-lg p-4 border border-[#333a45]/30">
                 <h3 className="text-[#ff9933] font-semibold mb-2 flex items-center gap-2">
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
@@ -516,7 +488,6 @@ export default function CreateGamePage() {
                   <li>• Vous pouvez créer des compositions libres sans villageois</li>
                 </ul>
               </div>
-            </ScaryHoverEffects>
           </motion.div>
         </div>
       </div>

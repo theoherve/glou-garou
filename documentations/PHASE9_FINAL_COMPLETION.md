@@ -28,7 +28,7 @@
 - **Statut** : Complètement implémenté et testé
 - **Fonctionnalités** : Simulation IA, 8 rôles, phases automatisées
 
-### 4. **ConnectionTest.tsx** ✅
+### 4. **ConnectionTest.tsx** (retiré)
 
 - **Rôle** : Tests de robustesse des connexions
 - **Statut** : Complètement implémenté et testé
@@ -90,7 +90,7 @@
 - **Statut** : Complètement rédigé et structuré
 - **Contenu** : Architecture, API, tests, performance, sécurité, déploiement
 
-### 13. ****tests**/Phase9TestSuite.test.tsx** ✅
+### 13. \***\*tests**/Phase9TestSuite.test.tsx\*\* ✅
 
 - **Rôle** : Tests unitaires complets
 - **Statut** : Complètement implémenté et validé
