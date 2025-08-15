@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
         .insert({
           game_id: game.id,
           name: playerName,
-          role: "unknown",
+          role: "villageois",
           is_game_master: false,
           status: "alive",
           created_at: new Date().toISOString(),

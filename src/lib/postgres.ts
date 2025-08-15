@@ -93,7 +93,7 @@ export const createTablesIfNotExist = async () => {
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
         name TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'villager',
+        role TEXT NOT NULL DEFAULT 'villageois',
         status TEXT NOT NULL DEFAULT 'alive',
         is_game_master BOOLEAN NOT NULL DEFAULT FALSE,
         is_lover BOOLEAN NOT NULL DEFAULT FALSE,

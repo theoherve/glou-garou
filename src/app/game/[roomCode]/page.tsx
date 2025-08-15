@@ -47,6 +47,18 @@ import { PlayerConnectionStatus } from '@/components/PlayerConnectionStatus';
 import { StateBackupManager } from '@/components/StateBackupManager';
 import { Game, Player, Role, PlayerStatus } from '@/types/game';
 
+type RawPlayerRow = {
+  id: string;
+  name: string;
+  role: string;
+  status: string;
+  is_game_master: boolean;
+  is_lover?: boolean;
+  lover_id?: string | null;
+  has_used_ability?: boolean;
+  vote_target?: string | null;
+};
+
 interface GamePageProps {
   params: Promise<{
     roomCode: string;
@@ -104,8 +116,34 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
             
             if (gameData.game) {
               // Les joueurs sont déjà inclus dans gameData.game.players
-              const players = gameData.game.players || [];
-              console.log('Joueurs récupérés depuis gameData:', players);
+              const validRoles: Role[] = [
+                'loup-garou',
+                'villageois',
+                'voyante',
+                'chasseur',
+                'cupidon',
+                'sorciere',
+                'petite-fille',
+                'capitaine',
+                'voleur',
+              ];
+              const rawPlayers: RawPlayerRow[] = (gameData.game.players || []) as RawPlayerRow[];
+              const isRole = (r: string): r is Role => (validRoles as readonly string[]).includes(r as Role);
+
+              const players: Player[] = rawPlayers
+                .filter((p) => p && p.id && typeof p.name === 'string')
+                .map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  role: isRole(p.role) ? p.role : 'villageois',
+                  status: (p.status || 'alive') as PlayerStatus,
+                  isGameMaster: !!p.is_game_master,
+                  isLover: !!p.is_lover,
+                  loverId: p.lover_id || undefined,
+                  hasUsedAbility: !!p.has_used_ability,
+                  voteTarget: p.vote_target || undefined,
+                }));
+              console.log('Joueurs convertis:', players);
               
               // Convertir les données de la base vers le format du store
               const game: Game = {
@@ -128,21 +166,10 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
               console.log('Jeu défini dans le store');
               
               // Trouver le joueur maître parmi les joueurs récupérés
-              const gameMaster = players.find((p: any) => p.is_game_master);
+              const gameMaster = players.find((p) => p.isGameMaster);
               if (gameMaster) {
-                const player: Player = {
-                  id: gameMaster.id,
-                  name: gameMaster.name,
-                  role: gameMaster.role as Role,
-                  status: gameMaster.status as PlayerStatus,
-                  isGameMaster: gameMaster.is_game_master,
-                  isLover: gameMaster.is_lover,
-                  loverId: gameMaster.lover_id || undefined,
-                  hasUsedAbility: gameMaster.has_used_ability,
-                  voteTarget: gameMaster.vote_target || undefined,
-                };
-                setCurrentPlayer(player);
-                console.log('Joueur maître défini:', player);
+                setCurrentPlayer(gameMaster);
+                console.log('Joueur maître défini:', gameMaster);
               } else {
                 console.log('Pas de joueur maître trouvé parmi les joueurs');
               }
@@ -544,7 +571,7 @@ function GamePageClient({ params }: { params: Promise<{ roomCode: string }> }) {
                             {isCurrentPlayer && <span className="text-[#ff3333] ml-1">(Vous)</span>}
                           </div>
                           <div className="text-xs text-[#cccccc]">
-                            {isDead ? 'Éliminé' : getRoleData(player.role).name}
+                            {isDead ? 'Éliminé' : getRoleAssets(player.role).displayName}
                           </div>
                         </div>
 

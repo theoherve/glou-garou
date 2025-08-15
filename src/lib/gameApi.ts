@@ -76,17 +76,36 @@ export const gameApi = {
 
     if (playersError) throw playersError;
 
-    const players: Player[] = playersData.map((p: PlayerRow) => ({
-      id: p.id,
-      name: p.name,
-      role: p.role as Role,
-      status: p.status as PlayerStatus,
-      isGameMaster: p.is_game_master,
-      isLover: p.is_lover,
-      loverId: p.lover_id || undefined,
-      hasUsedAbility: p.has_used_ability,
-      voteTarget: p.vote_target || undefined,
-    }));
+    const validRoles = new Set<Role>([
+      "loup-garou",
+      "villageois",
+      "voyante",
+      "chasseur",
+      "cupidon",
+      "sorciere",
+      "petite-fille",
+      "capitaine",
+      "voleur",
+    ]);
+
+    const players: Player[] = playersData
+      .filter((p: PlayerRow) => p && p.id && typeof p.name === "string")
+      .map((p: PlayerRow) => {
+        const role = validRoles.has(p.role as Role)
+          ? (p.role as Role)
+          : ("villageois" as Role);
+        return {
+          id: p.id,
+          name: p.name,
+          role,
+          status: (p.status as PlayerStatus) || ("alive" as PlayerStatus),
+          isGameMaster: !!p.is_game_master,
+          isLover: !!p.is_lover,
+          loverId: p.lover_id || undefined,
+          hasUsedAbility: !!p.has_used_ability,
+          voteTarget: p.vote_target || undefined,
+        };
+      });
 
     return {
       id: gameData.id,
@@ -134,7 +153,7 @@ export const playerApi = {
       .insert({
         game_id: gameId,
         name: playerName,
-        role: "villager",
+        role: "villageois",
         status: "alive",
         is_game_master: false,
         is_lover: false,
