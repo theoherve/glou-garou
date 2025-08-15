@@ -234,5 +234,3 @@ export const GameStartNotification = ({ isVisible, onClose }: GameStartNotificat
   );
 };
 
-
-
