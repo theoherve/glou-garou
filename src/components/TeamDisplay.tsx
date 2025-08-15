@@ -261,4 +261,3 @@ export const TeamDisplay = ({ players, className = "" }: TeamDisplayProps) => {
   );
 };
 
-
